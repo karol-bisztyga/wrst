@@ -14,10 +14,10 @@
     "wrst": "tsx packages/cli/src/cli.ts",
     "pack": "npm pack -w wrst",
     "pack:dry": "npm pack -w wrst --dry-run",
-    "android:build": "cd packages/native-android && ./gradlew assembleDebug",
-    "android:run": "cd packages/native-android && ./gradlew installDebug && adb shell monkey -p com.example.wearos -c android.intent.category.LAUNCHER 1",
-    "ios:build": "xcodebuild -project packages/native-ios/AppleWatch.xcodeproj -scheme 'AppleWatch Watch App' -configuration Debug -destination 'generic/platform=watchOS Simulator' build",
-    "ios:run": "bash scripts/ios-run.sh"
+    "build:android": "cd packages/native-android && ./gradlew assembleDebug",
+    "run:android": "cd packages/native-android && ./gradlew installDebug && adb shell monkey -p com.example.wearos -c android.intent.category.LAUNCHER 1",
+    "build:ios": "xcodebuild -project packages/native-ios/AppleWatch.xcodeproj -scheme 'AppleWatch Watch App' -configuration Debug -destination 'generic/platform=watchOS Simulator' build",
+    "run:ios": "bash scripts/ios-run.sh"
   },
   "devDependencies": {
     "@types/node": "^25.6.0",
