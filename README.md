@@ -26,16 +26,34 @@ npm run run:android         # boots a Wear OS emulator, builds, installs, launch
 Then edit `src/App.tsx` and watch it hot-reload on the watch.
 
 ```tsx
-import { View, Text, Button, useState } from "wrst";
-import type { Component } from "wrst";
+import {
+  Text,
+  Button,
+  useState,
+  VerticalView,
+  Component,
+  HorizontalView,
+} from "wrst";
 
+// Your app's root component. Components are plain functions returning a tree;
+// state is reactive (useState), and the same code renders on Wear OS & Apple Watch.
 const App: Component = () => {
   const [count, setCount] = useState(0);
+
   return (
-    <View style={{ padding: 12 }}>
-      <Text style={{ color: "#fff" }}>{`Count: ${count}`}</Text>
-      <Button onPress={() => setCount(count + 1)}>Increment</Button>
-    </View>
+    <HorizontalView
+      style={{ verticalAlignment: "center", width: "fill", height: "fill" }}
+    >
+      <VerticalView style={{ horizontalAlignment: "center", width: "fill" }}>
+        <Text style={{ color: "#ffffff" }}>{`Count: ${count}`}</Text>
+        <Button onPress={() => setCount(count + 1)}>
+          <Text style={{ color: "#FFF" }}>Increment</Text>
+        </Button>
+        <Button onPress={() => setCount(0)}>
+          <Text style={{ color: "#F00" }}>Reset</Text>
+        </Button>
+      </VerticalView>
+    </HorizontalView>
   );
 };
 
