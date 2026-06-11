@@ -1,0 +1,32 @@
+# node / build output
+node_modules
+dist
+
+# npm pack tarballs
+*.tgz
+
+# native runtimes copied/built into the wrst package by build:native (generated)
+packages/wrst/android/
+packages/wrst/ios/
+
+# OS
+.DS_Store
+
+# --- Android / Gradle (WearOs) ---
+**/build/
+.gradle/
+**/.gradle/
+local.properties
+*.apk
+*.aab
+.cxx/
+
+# --- iOS / Xcode (AppleWatch) ---
+DerivedData/
+**/xcuserdata/
+*.xcuserstate
+**/.swiftpm/
+Pods/
+
+# private notes / local-only stuff - never published
+/private/

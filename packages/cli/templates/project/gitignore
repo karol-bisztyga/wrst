@@ -1,0 +1,11 @@
+node_modules
+dist
+
+# native build artifacts
+**/build/
+.gradle/
+DerivedData/
+Pods/
+*.tgz
+
+.DS_Store

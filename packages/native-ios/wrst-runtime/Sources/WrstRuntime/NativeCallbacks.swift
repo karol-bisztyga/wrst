@@ -1,0 +1,150 @@
+import Foundation
+import os
+
+// C-callable entry points invoked from the QuickJS shim (qjs_bridge.c) during
+// eval. They run synchronously on the main thread (eval happens on the main
+// actor), so MainActor.assumeIsolated is safe.
+
+private let jsLogger = Logger(subsystem: "wrst", category: "JS")
+
+@_cdecl("swift_native_log")
+public nonisolated func swift_native_log(_ msg: UnsafePointer<CChar>?) {
+    guard let msg else { return }
+    jsLogger.log("\(String(cString: msg), privacy: .public)")
+}
+
+@_cdecl("swift_native_warn")
+public nonisolated func swift_native_warn(_ msg: UnsafePointer<CChar>?) {
+    guard let msg else { return }
+    jsLogger.warning("\(String(cString: msg), privacy: .public)")
+}
+
+@_cdecl("swift_native_error")
+public nonisolated func swift_native_error(_ msg: UnsafePointer<CChar>?) {
+    guard let msg else { return }
+    jsLogger.error("\(String(cString: msg), privacy: .public)")
+}
+
+@_cdecl("swift_native_register_state")
+public nonisolated func swift_native_register_state(_ id: UnsafePointer<CChar>?, _ value: UnsafePointer<CChar>?) {
+    guard let id, let value else { return }
+    let key = String(cString: id), json = String(cString: value)
+    MainActor.assumeIsolated { StateRegistry.shared.register(key, json: json) }
+}
+
+@_cdecl("swift_native_set_state")
+public nonisolated func swift_native_set_state(_ id: UnsafePointer<CChar>?, _ value: UnsafePointer<CChar>?) {
+    guard let id, let value else { return }
+    let key = String(cString: id), json = String(cString: value)
+    MainActor.assumeIsolated { StateRegistry.shared.set(key, json: json) }
+}
+
+// Returns a malloc'd C string the caller (C) frees, or nil.
+@_cdecl("swift_native_get_state")
+public nonisolated func swift_native_get_state(_ id: UnsafePointer<CChar>?) -> UnsafeMutablePointer<CChar>? {
+    guard let id else { return nil }
+    let key = String(cString: id)
+    let json: String? = MainActor.assumeIsolated { StateRegistry.shared.json(key) }
+    guard let json else { return nil }
+    return strdup(json)
+}
+
+// Returns nil on success, or a malloc'd error message (the caller, C, frees it
+// and throws it as a JS exception → surfaces on the error screen).
+@_cdecl("swift_native_set_app_config")
+public nonisolated func swift_native_set_app_config(_ color: UnsafePointer<CChar>?) -> UnsafeMutablePointer<CChar>? {
+    guard let color else { return nil }
+    let value = String(cString: color)
+    let error: String? = MainActor.assumeIsolated { AppConfig.shared.setBackgroundColor(value) }
+    guard let error else { return nil }
+    return strdup(error)
+}
+
+@_cdecl("swift_native_performance_now")
+public nonisolated func swift_native_performance_now() -> Double {
+    PerformanceClock.now()
+}
+
+@_cdecl("swift_native_set_timeout")
+public nonisolated func swift_native_set_timeout(_ id: UnsafePointer<CChar>?, _ delay: Double) {
+    guard let id else { return }
+    let key = String(cString: id)
+    MainActor.assumeIsolated { TimerManager.shared.setTimeout(key, delayMs: delay) }
+}
+
+@_cdecl("swift_native_clear_timeout")
+public nonisolated func swift_native_clear_timeout(_ id: UnsafePointer<CChar>?) {
+    guard let id else { return }
+    let key = String(cString: id)
+    MainActor.assumeIsolated { TimerManager.shared.clear(key) }
+}
+
+@_cdecl("swift_native_set_interval")
+public nonisolated func swift_native_set_interval(_ id: UnsafePointer<CChar>?, _ delay: Double) {
+    guard let id else { return }
+    let key = String(cString: id)
+    MainActor.assumeIsolated { TimerManager.shared.setInterval(key, delayMs: delay) }
+}
+
+@_cdecl("swift_native_clear_interval")
+public nonisolated func swift_native_clear_interval(_ id: UnsafePointer<CChar>?) {
+    guard let id else { return }
+    let key = String(cString: id)
+    MainActor.assumeIsolated { TimerManager.shared.clear(key) }
+}
+
+@_cdecl("swift_native_navigate")
+public nonisolated func swift_native_navigate() {
+    MainActor.assumeIsolated { RuntimeBridge.shared.navigate() }
+}
+
+// localStorage - UserDefaults is thread-safe, so no MainActor hop needed.
+
+// Returns a malloc'd C string the caller (C) frees, or nil.
+@_cdecl("swift_native_storage_get")
+public nonisolated func swift_native_storage_get(_ key: UnsafePointer<CChar>?) -> UnsafeMutablePointer<CChar>? {
+    guard let key, let value = LocalStorage.get(String(cString: key)) else { return nil }
+    return strdup(value)
+}
+
+@_cdecl("swift_native_storage_set")
+public nonisolated func swift_native_storage_set(_ key: UnsafePointer<CChar>?, _ value: UnsafePointer<CChar>?) {
+    guard let key, let value else { return }
+    LocalStorage.set(String(cString: key), String(cString: value))
+}
+
+@_cdecl("swift_native_storage_remove")
+public nonisolated func swift_native_storage_remove(_ key: UnsafePointer<CChar>?) {
+    guard let key else { return }
+    LocalStorage.remove(String(cString: key))
+}
+
+@_cdecl("swift_native_storage_clear")
+public nonisolated func swift_native_storage_clear() {
+    LocalStorage.clear()
+}
+
+@_cdecl("swift_native_set_show_header")
+public nonisolated func swift_native_set_show_header(_ show: Int32) {
+    MainActor.assumeIsolated { AppConfig.shared.showHeader = (show != 0) }
+}
+
+// Returns a malloc'd C string the caller (C) frees.
+@_cdecl("swift_native_device_info")
+public nonisolated func swift_native_device_info() -> UnsafeMutablePointer<CChar>? {
+    strdup(MainActor.assumeIsolated { DeviceInfo.json() })
+}
+
+@_cdecl("swift_native_fetch")
+public nonisolated func swift_native_fetch(_ url: UnsafePointer<CChar>?,
+                                    _ options: UnsafePointer<CChar>?,
+                                    _ resolveId: UnsafePointer<CChar>?,
+                                    _ rejectId: UnsafePointer<CChar>?) {
+    guard let url, let resolveId, let rejectId else { return }
+    FetchManager.perform(
+        url: String(cString: url),
+        optionsJSON: options.map { String(cString: $0) } ?? "{}",
+        resolveId: String(cString: resolveId),
+        rejectId: String(cString: rejectId)
+    )
+}

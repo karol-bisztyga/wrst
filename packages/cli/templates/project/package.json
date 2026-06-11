@@ -1,0 +1,19 @@
+{
+  "name": "__APP_SLUG__",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "wrst start",
+    "run:ios": "wrst run-ios",
+    "run:android": "wrst run-android",
+    "build:ios": "wrst build-ios",
+    "build:android": "wrst build-android"
+  },
+  "dependencies": {
+    "wrst": "^0.1.0"
+  },
+  "devDependencies": {
+    "@wrst/cli": "^0.1.0"
+  }
+}

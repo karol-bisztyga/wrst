@@ -1,0 +1,36 @@
+# --------------------------------------------------
+# Xcode / Apple Watch / iOS user-specific files
+# --------------------------------------------------
+
+# User data
+xcuserdata/
+*.xcuserdatad/
+*.xcuserstate
+
+# Workspace user settings
+*.xcworkspace/xcuserdata/
+
+# Xcode build products
+build/
+DerivedData/
+
+# Swift Package Manager
+.build/
+Packages/
+
+# Xcode package resolution (optional)
+# Commit this if you want deterministic package versions
+# Package.resolved
+
+# Playgrounds
+timeline.xctimeline
+playground.xcworkspace
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output/
+
+# macOS
+.DS_Store
