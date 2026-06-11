@@ -31,6 +31,9 @@ export {
 export { createAppConfig } from "./runtime/appConfig.ts";
 export { Device } from "./runtime/device.ts";
 
+// Native modules - call host-registered native capabilities (the extension hook).
+export { callNativeModule, createNativeModule } from "./runtime/nativeModule.ts";
+
 // Types.
 export type {
   Component,

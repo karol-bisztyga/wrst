@@ -12,6 +12,7 @@ import { GlobalStateParent } from "./GlobalStateParent.tsx";
 import { GlobalStateChildA } from "./GlobalStateChildA.tsx";
 import { GlobalStateChildB } from "./GlobalStateChildB.tsx";
 import { DeviceInfo } from "./DeviceInfo.tsx";
+import { NativeModule } from "./NativeModule.tsx";
 
 createAppConfig({ appBackgroundColor: "#000" });
 
@@ -30,6 +31,7 @@ createNavigation({
     globalChildA: GlobalStateChildA,
     globalChildB: GlobalStateChildB,
     deviceInfo: DeviceInfo,
+    nativeModule: NativeModule,
   },
   showHeader: false,
 });

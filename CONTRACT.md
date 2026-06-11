@@ -26,7 +26,7 @@ event ──► call(handlerId) ──► handler runs ──► setState(id, va
 The bundle installs a global on load:
 
 ```js
-globalThis.__WRST_PROTOCOL__ = <integer>   // e.g. 1
+globalThis.__WRST_PROTOCOL__ = <integer>   // currently 2
 ```
 
 Each native host hard-codes the version it implements. **After evaluating the
@@ -169,6 +169,24 @@ statusText: string, rawBody: string, jsonBody?: any }`.
 > Functions are called via optional chaining (`native?.x`), so a host that hasn't
 > implemented an **optional** one (e.g. `nativeSetShowHeader`) degrades gracefully.
 > The non-optional ones above are **required**.
+
+### Native modules (extension hook) — _added in protocol v2_
+
+One generic dispatch channel lets a host's thin native shell expose extra native
+capabilities (sensors, haptics-extras, HealthKit, …) **without changing the
+engine binary**. The engine ships only this single function; the actual modules
+are registered by the shell with the same call on both platforms -
+`WrstNativeModules.register(name) { … }` (Kotlin object / Swift static).
+
+| Function           | Signature                                      | Notes                                                                                   |
+| ------------------ | ---------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `nativeModuleCall` | `(name: string, argsJson: string) => string \| null` | Look up the module `name`; call it with the JSON-decoded args; return its JSON-encoded result (or `null` if no such module / no result). |
+
+JS reaches this via the public `callNativeModule(name, ...args)` /
+`createNativeModule(name)` API: it `JSON.stringify`s the args array, calls
+`native.nativeModuleCall`, and `JSON.parse`s the result. Synchronous; for
+push/streaming (e.g. sensor samples) a module calls back a registered JS
+callback id via `globalThis.call(id, payload)`, exactly like timers/fetch.
 
 ## Dev transport (server ↔ host)
 

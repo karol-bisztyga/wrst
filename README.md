@@ -109,6 +109,55 @@ and a **Swift package** for iOS - so your `ios/`/`android/` shells just referenc
 it from `node_modules`. The JS↔native wire format is documented in
 [CONTRACT.md](./CONTRACT.md).
 
+## Native modules (the extension hook)
+
+The engine ships the universal, permission-light capabilities (timers, `fetch`,
+`localStorage`, device info, …). For anything that needs a platform framework or
+a permission - sensors, HealthKit, Bluetooth, NFC - you register a **native
+module** in your own thin shell, and call it from JS. **No engine fork, no engine
+rebuild** - the runtime exposes one dispatch channel and your module rides it.
+
+**JS** (anywhere in your app):
+
+```ts
+import { callNativeModule, createNativeModule } from "wrst";
+
+const result = callNativeModule<string>("hello"); // -> "hello from native module"
+
+// or a typed, reusable handle:
+const hello = createNativeModule<[], string>("hello");
+hello();
+```
+
+Args are JSON-serialized across the bridge and the return value is JSON-parsed
+back. Register the module once, in the native shell:
+
+Registration uses the **same call shape on both platforms** -
+`WrstNativeModules.register(name) { … }` - so adding a module is one register
+call per side.
+
+**Android** - `android/app/.../MainActivity.kt` (before `setContent`):
+
+```kotlin
+WrstNativeModules.register("hello") {
+    Log.d("wrst", "hello from native module")
+    "hello from native module"
+}
+```
+
+**Apple Watch** - `ios/.../AppleWatchApp.swift` (in `init()`):
+
+```swift
+WrstNativeModules.register("hello") { _ in
+    print("hello from native module")
+    return "hello from native module"
+}
+```
+
+The `example/` app ships exactly this under the **Native Module** menu screen.
+For streaming data (e.g. sensor samples), a module calls back a registered JS
+callback instead of returning - same mechanism as timers/`fetch`.
+
 ## Requirements
 
 - **Node** 20+

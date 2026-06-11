@@ -135,6 +135,22 @@ public nonisolated func swift_native_device_info() -> UnsafeMutablePointer<CChar
     strdup(MainActor.assumeIsolated { DeviceInfo.json() })
 }
 
+// Extension hook: dispatch to a host-registered native module. Returns a
+// malloc'd JSON C string (caller frees) of the module's result, or nil when no
+// module is registered under `name` / it returns nothing.
+@_cdecl("swift_native_module_call")
+public nonisolated func swift_native_module_call(_ name: UnsafePointer<CChar>?,
+                                                 _ argsJson: UnsafePointer<CChar>?) -> UnsafeMutablePointer<CChar>? {
+    guard let name else { return nil }
+    let moduleName = String(cString: name)
+    let args = argsJson.map { String(cString: $0) } ?? "[]"
+    let resultJSON: String? = MainActor.assumeIsolated {
+        WrstNativeModules.shared.call(moduleName, argsJSON: args)
+    }
+    guard let resultJSON else { return nil }
+    return strdup(resultJSON)
+}
+
 @_cdecl("swift_native_fetch")
 public nonisolated func swift_native_fetch(_ url: UnsafePointer<CChar>?,
                                     _ options: UnsafePointer<CChar>?,

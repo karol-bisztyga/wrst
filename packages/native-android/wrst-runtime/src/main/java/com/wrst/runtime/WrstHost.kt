@@ -20,6 +20,10 @@ import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 // `setContent { WrstHost() }`; everything else (QuickJS, dev-server connection,
 // navigation, rendering, hot reload) lives here. This is the Android twin of
 // the iOS `WrstRootView`.
+//
+// Native capabilities (the extension hook) are registered separately via
+// `WrstNativeModules.register(...)` and reached from app JS through
+// `callNativeModule(name, ...args)`.
 @Composable
 fun WrstHost() {
     val context = LocalContext.current

@@ -24,6 +24,7 @@ extern void swift_native_storage_set(const char *key, const char *value);
 extern void swift_native_storage_remove(const char *key);
 extern void swift_native_storage_clear(void);
 extern void swift_native_fetch(const char *url, const char *options, const char *resolve_id, const char *reject_id);
+extern char *swift_native_module_call(const char *name, const char *args_json); // malloc'd JSON or NULL; we free
 
 struct QJSBridge {
     JSRuntime *rt;
@@ -246,6 +247,26 @@ static JSValue n_navigate(JSContext *ctx, JSValueConst this_val, int argc, JSVal
     return JS_UNDEFINED;
 }
 
+// Extension hook: native.nativeModuleCall(name, argsJson) -> jsonString | null.
+// Forwards to the Swift module registry and returns the module's JSON-encoded
+// result *as a string* (the JS side runs JSON.parse on it - mirrors Android).
+static JSValue n_module_call(JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) {
+    if (argc < 1) return JS_NULL;
+    const char *name = JS_ToCString(ctx, argv[0]);
+    const char *args = argc >= 2 ? JS_ToCString(ctx, argv[1]) : NULL;
+    JSValue result = JS_NULL;
+    if (name) {
+        char *json = swift_native_module_call(name, args ? args : "[]");
+        if (json) {
+            result = JS_NewString(ctx, json);
+            free(json);
+        }
+    }
+    if (name) JS_FreeCString(ctx, name);
+    if (args) JS_FreeCString(ctx, args);
+    return result;
+}
+
 static void install_native(JSContext *ctx) {
     JSValue global = JS_GetGlobalObject(ctx);
     JSValue native = JS_NewObject(ctx);
@@ -266,6 +287,7 @@ static void install_native(JSContext *ctx) {
     JS_SetPropertyStr(ctx, native, "nativeSetInterval", JS_NewCFunction(ctx, n_set_interval, "nativeSetInterval", 2));
     JS_SetPropertyStr(ctx, native, "nativeClearInterval", JS_NewCFunction(ctx, n_clear_interval, "nativeClearInterval", 1));
     JS_SetPropertyStr(ctx, native, "nativeNavigate", JS_NewCFunction(ctx, n_navigate, "nativeNavigate", 0));
+    JS_SetPropertyStr(ctx, native, "nativeModuleCall", JS_NewCFunction(ctx, n_module_call, "nativeModuleCall", 2));
 
     JS_SetPropertyStr(ctx, native, "nativeStorageGet", JS_NewCFunction(ctx, n_storage_get, "nativeStorageGet", 1));
     JS_SetPropertyStr(ctx, native, "nativeStorageSet", JS_NewCFunction(ctx, n_storage_set, "nativeStorageSet", 2));

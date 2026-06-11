@@ -32,7 +32,24 @@ object JsRuntimeManager {
 
     // The JS↔native wire-contract version this host implements (see CONTRACT.md).
     // Must match the bundle's globalThis.__WRST_PROTOCOL__.
-    private const val WRST_PROTOCOL_VERSION = 1
+    private const val WRST_PROTOCOL_VERSION = 2
+
+    // Decode the JSON args array JS passes to a native module into a List.
+    private fun decodeModuleArgs(json: String): List<Any?> {
+        val arr = try { JSONArray(json) } catch (e: Exception) { return emptyList() }
+        return (0 until arr.length()).map { i -> if (arr.isNull(i)) null else arr.get(i) }
+    }
+
+    // Encode a native module's return value as a JSON string for JS (or null).
+    private fun encodeModuleResult(value: Any?): String? = when (value) {
+        null -> null
+        is String -> JSONObject.quote(value)
+        is Boolean, is Number -> value.toString()
+        is JSONObject, is JSONArray -> value.toString()
+        is Map<*, *> -> JSONObject(value).toString()
+        is List<*> -> JSONArray(value).toString()
+        else -> JSONObject.quote(value.toString())
+    }
 
     private val httpClient: OkHttpClient = run {
         val trustAll = object : X509TrustManager {
@@ -148,6 +165,15 @@ object JsRuntimeManager {
                 function("nativeNavigate") { _: Array<Any?> ->
                     navigateChannel.trySend(Unit)
                     Unit
+                }
+                // Extension hook: dispatch to a host-registered native module.
+                // args = [name, argsJson]; returns the module's JSON-encoded
+                // result (or null if there's no such module / no result).
+                function("nativeModuleCall") { args: Array<Any?> ->
+                    val name = args.getOrNull(0) as? String ?: return@function null
+                    val argsJson = args.getOrNull(1) as? String ?: "[]"
+                    val handler = WrstNativeModules.handler(name) ?: return@function null
+                    encodeModuleResult(handler(decodeModuleArgs(argsJson)))
                 }
                 function("nativeSetAppConfig") { args: Array<Any?> ->
                     val color = args.getOrNull(0) as? String

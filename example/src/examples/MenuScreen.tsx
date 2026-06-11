@@ -62,6 +62,13 @@ export const MenuScreen: Component = () => {
           onPress={() => navigate("deviceInfo")}
           label="Device Info"
         />
+        <View style={{ height: 4 }} />
+        <StyledButton
+          width={120}
+          height={36}
+          onPress={() => navigate("nativeModule")}
+          label="Native Module"
+        />
         <View style={{ height: 8 }} />
       </VerticalView>
     </ScrollView>
