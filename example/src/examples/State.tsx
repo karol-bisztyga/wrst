@@ -103,6 +103,7 @@ export const State: Component = () => {
 
               setColor(newColor);
               setText(String(newNumber));
+              console.log("new number", newNumber);
 
               if (len < maxItems) {
                 setItems([...items, newNumber]);

@@ -108,10 +108,21 @@ fun WrstHost() {
                 loadCounter.value++
             }
             ErrorHandler.onReload = { socketClient.pullCode() }
+            // Forward app console.* logs to the dev server over the same socket.
+            JsRuntimeManager.logSink = { level, message ->
+                socketClient.send(
+                    org.json.JSONObject()
+                        .put("type", "log")
+                        .put("level", level)
+                        .put("message", message)
+                        .toString(),
+                )
+            }
             socketClient.connect()
             socketClient.pullCode()
             onDispose {
                 Permissions.requester = null
+                JsRuntimeManager.logSink = null
                 socketClient.disconnect()
             }
         } else {

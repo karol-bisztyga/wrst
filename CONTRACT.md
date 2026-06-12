@@ -239,4 +239,6 @@ both hosts implement the client side.
   - `503` → no bundle built yet; wait.
 - **WebSocket** (`:8082`):
   - Host → server on connect: `{ "type": "hello", "name": "<device name>" }`.
+  - Host → server (debug only): `{ "type": "log", "level": "log"|"warn"|"error", "message": string }`
+    - forwarded `console.*` calls; the dev server streams them to its console.
   - Server → host: `"reload"` - a nudge to re-`GET /bundle.js` (HTTP is the source of truth).

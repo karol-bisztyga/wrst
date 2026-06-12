@@ -2,9 +2,16 @@ import { WebSocketServer, WebSocket } from "ws";
 
 type Client = { ws: WebSocket; name: string };
 
-// onChange is called whenever the connected-device set changes (connect, hello
-// with a name, disconnect) so the dashboard can re-render.
-export function startSocketServer(port: number, onChange: () => void = () => {}) {
+// Events the dev server cares about. Clients send JSON messages:
+//   { type: "hello", name }            once on connect (identifies the device)
+//   { type: "log", level, message }    a forwarded app console.* call
+export type SocketHandlers = {
+  onConnect?: (name: string) => void;
+  onDisconnect?: (name: string) => void;
+  onLog?: (device: string, level: string, message: string) => void;
+};
+
+export function startSocketServer(port: number, handlers: SocketHandlers = {}) {
   const wss = new WebSocketServer({ port });
 
   const clients: Client[] = [];
@@ -12,25 +19,26 @@ export function startSocketServer(port: number, onChange: () => void = () => {})
   wss.on("connection", (ws) => {
     const client: Client = { ws, name: "unknown device" };
     clients.push(client);
-    onChange();
 
-    // Clients send { type: "hello", name } once on connect so we can list them.
     ws.on("message", (data) => {
+      let msg: any;
       try {
-        const msg = JSON.parse(data.toString());
-        if (msg.type === "hello" && typeof msg.name === "string") {
-          client.name = msg.name;
-          onChange();
-        }
+        msg = JSON.parse(data.toString());
       } catch {
-        // ignore non-JSON messages
+        return; // ignore non-JSON
+      }
+      if (msg.type === "hello" && typeof msg.name === "string") {
+        client.name = msg.name;
+        handlers.onConnect?.(client.name);
+      } else if (msg.type === "log" && typeof msg.message === "string") {
+        handlers.onLog?.(client.name, String(msg.level ?? "log"), msg.message);
       }
     });
 
     ws.on("close", () => {
       const index = clients.indexOf(client);
       if (index !== -1) clients.splice(index, 1);
-      onChange();
+      handlers.onDisconnect?.(client.name);
     });
   });
 
@@ -39,9 +47,7 @@ export function startSocketServer(port: number, onChange: () => void = () => {})
     // of truth (bundle or build error).
     broadcast(message: string) {
       clients.forEach((c) => {
-        if (c.ws.readyState === c.ws.OPEN) {
-          c.ws.send(message);
-        }
+        if (c.ws.readyState === c.ws.OPEN) c.ws.send(message);
       });
     },
 

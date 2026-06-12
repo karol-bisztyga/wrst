@@ -10,19 +10,25 @@ private let jsLogger = Logger(subsystem: "wrst", category: "JS")
 @_cdecl("swift_native_log")
 public nonisolated func swift_native_log(_ msg: UnsafePointer<CChar>?) {
     guard let msg else { return }
-    jsLogger.log("\(String(cString: msg), privacy: .public)")
+    let s = String(cString: msg)
+    jsLogger.log("\(s, privacy: .public)")
+    MainActor.assumeIsolated { DevLog.shared.forward("log", s) }
 }
 
 @_cdecl("swift_native_warn")
 public nonisolated func swift_native_warn(_ msg: UnsafePointer<CChar>?) {
     guard let msg else { return }
-    jsLogger.warning("\(String(cString: msg), privacy: .public)")
+    let s = String(cString: msg)
+    jsLogger.warning("\(s, privacy: .public)")
+    MainActor.assumeIsolated { DevLog.shared.forward("warn", s) }
 }
 
 @_cdecl("swift_native_error")
 public nonisolated func swift_native_error(_ msg: UnsafePointer<CChar>?) {
     guard let msg else { return }
-    jsLogger.error("\(String(cString: msg), privacy: .public)")
+    let s = String(cString: msg)
+    jsLogger.error("\(s, privacy: .public)")
+    MainActor.assumeIsolated { DevLog.shared.forward("error", s) }
 }
 
 @_cdecl("swift_native_register_state")

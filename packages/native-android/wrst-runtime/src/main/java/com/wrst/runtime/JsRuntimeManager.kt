@@ -70,6 +70,12 @@ object JsRuntimeManager {
     // Disk-backed key/value store for the JS localStorage shim.
     private var prefs: SharedPreferences? = null
 
+    // Dev-only: when set (debug builds with a dev-server connection), console.*
+    // calls are forwarded here as (level, message) so the host can stream them
+    // to the dev server. Null in release → logs go only to Logcat.
+    @Volatile
+    var logSink: ((level: String, message: String) -> Unit)? = null
+
     // Static device info for the JS `Device` global.
     private var deviceInfoJson: String =
         """{"platform":"wear-os","shape":"rect","dimensions":{"width":0,"height":0}}"""
@@ -109,13 +115,16 @@ object JsRuntimeManager {
         quickJs = QuickJs.create(Dispatchers.IO).apply {
             define("native") {
                 function("log") { args: Array<Any?> ->
-                    Log.d("JS", args.joinToString(" "))
+                    val m = args.joinToString(" ")
+                    Log.d("JS", m); logSink?.invoke("log", m)
                 }
                 function("warn") { args: Array<Any?> ->
-                    Log.w("JS", args.joinToString(" "))
+                    val m = args.joinToString(" ")
+                    Log.w("JS", m); logSink?.invoke("warn", m)
                 }
                 function("error") { args: Array<Any?> ->
-                    Log.e("JS", args.joinToString(" "))
+                    val m = args.joinToString(" ")
+                    Log.e("JS", m); logSink?.invoke("error", m)
                 }
                 function("registerState") { args: Array<Any?> ->
                     val id = args.getOrNull(0) as? String ?: return@function
