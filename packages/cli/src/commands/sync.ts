@@ -1,6 +1,7 @@
 import path from "node:path";
 import { existsSync, readFileSync, writeFileSync, readdirSync } from "node:fs";
 import { loadConfig, type WrstConfig } from "../config.ts";
+import { applyPermissions } from "../permissions.ts";
 
 // `wrst sync` - apply wrst.config.ts (name / bundle id / applicationId) to the
 // native projects. Also run automatically as the first step of run-*/build-*.
@@ -15,6 +16,7 @@ export async function sync(_args: string[]): Promise<void> {
 export function applyConfig(cwd: string, config: WrstConfig): void {
   applyIos(cwd, config);
   applyAndroid(cwd, config);
+  applyPermissions(cwd, config);
 }
 
 function edit(file: string, fn: (s: string) => string): void {

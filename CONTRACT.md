@@ -26,7 +26,7 @@ event ──► call(handlerId) ──► handler runs ──► setState(id, va
 The bundle installs a global on load:
 
 ```js
-globalThis.__WRST_PROTOCOL__ = <integer>   // currently 2
+globalThis.__WRST_PROTOCOL__ = <integer>   // currently 4
 ```
 
 Each native host hard-codes the version it implements. **After evaluating the
@@ -170,23 +170,63 @@ statusText: string, rawBody: string, jsonBody?: any }`.
 > implemented an **optional** one (e.g. `nativeSetShowHeader`) degrades gracefully.
 > The non-optional ones above are **required**.
 
-### Native modules (extension hook) — _added in protocol v2_
+### Native modules (extension hook) - _added in protocol v2_
 
 One generic dispatch channel lets a host's thin native shell expose extra native
-capabilities (sensors, haptics-extras, HealthKit, …) **without changing the
+capabilities (sensors, haptics-extras, HealthKit, ...) **without changing the
 engine binary**. The engine ships only this single function; the actual modules
 are registered by the shell with the same call on both platforms -
-`WrstNativeModules.register(name) { … }` (Kotlin object / Swift static).
+`WrstNativeModules.register(name) { ... }` (Kotlin object / Swift static).
 
-| Function           | Signature                                      | Notes                                                                                   |
-| ------------------ | ---------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Function           | Signature                                            | Notes                                                                                                                                    |
+| ------------------ | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | `nativeModuleCall` | `(name: string, argsJson: string) => string \| null` | Look up the module `name`; call it with the JSON-decoded args; return its JSON-encoded result (or `null` if no such module / no result). |
 
 JS reaches this via the public `callNativeModule(name, ...args)` /
-`createNativeModule(name)` API: it `JSON.stringify`s the args array, calls
-`native.nativeModuleCall`, and `JSON.parse`s the result. Synchronous; for
-push/streaming (e.g. sensor samples) a module calls back a registered JS
-callback id via `globalThis.call(id, payload)`, exactly like timers/fetch.
+`getNativeModule(name)` API: it `JSON.stringify`s the args array, calls
+`native.nativeModuleCall`, and `JSON.parse`s the result.
+
+**Streaming modules** (e.g. permission-gated sensors): JS uses
+`subscribeNativeModule(name, onEvent, options)`, which calls the module with
+`{ action: "start", callbackId, ...options }` (and `{ action: "stop", callbackId }`
+on unsubscribe). The module then pushes each event to that callback id via the
+host's `WrstNativeModules.emit(callbackId, json)`, which routes through
+`globalThis.call(id, payload)` - the same channel timers/fetch/engine-sensors use.
+
+### Engine sensors - _added in protocol v3_
+
+The promptless built-in motion sensors (accelerometer / gyroscope /
+magnetometer). Permission-gated sensors (heart rate, etc.) are native modules
+instead. Sampling is a stream: native delivers each sample via
+`call(callbackId, sample)`.
+
+| Function            | Signature                                                        |
+| ------------------- | ---------------------------------------------------------------- |
+| `nativeSensorStart` | `(type: string, callbackId: string, intervalMs: number) => void` |
+| `nativeSensorStop`  | `(callbackId: string) => void`                                   |
+
+`type` is `"accelerometer" \| "gyroscope" \| "magnetometer"`. The sample object
+passed to `call` is `{ x, y, z, timestamp }` with **normalized units** (both
+platforms agree): accelerometer **m/s²**, gyroscope **rad/s**, magnetometer
+**µT**; `timestamp` is epoch ms. JS reaches this via the public
+`subscribeSensor(type, cb, { intervalMs })` / `Sensors.accelerometer(cb)` API.
+
+### Runtime permissions - _added in protocol v4_
+
+Request a permission at run time and read its status. `name` is a logical
+permission from the wrst.config catalog (`heartRate`, `activity`, `location`,
+`microphone`, `bluetooth`, `notifications`); each host maps it to the platform
+permission(s).
+
+| Function                  | Signature                                   | Notes                                                                  |
+| ------------------------- | ------------------------------------------- | ---------------------------------------------------------------------- |
+| `nativePermissionStatus`  | `(name: string) => string`                  | Sync. Returns `"granted"\|"denied"\|"undetermined"` without prompting. |
+| `nativePermissionRequest` | `(name: string, resolveId: string) => void` | Shows the system dialog, then `call(resolveId, status)`.               |
+
+JS reaches these via `getPermissionStatus(name)` (sync) and
+`requestPermission(name)` (Promise). Android handles the whole catalog uniformly;
+iOS is per-framework (currently `activity`/CoreMotion; others report
+`"undetermined"`).
 
 ## Dev transport (server ↔ host)
 

@@ -32,7 +32,7 @@ object JsRuntimeManager {
 
     // The JS↔native wire-contract version this host implements (see CONTRACT.md).
     // Must match the bundle's globalThis.__WRST_PROTOCOL__.
-    private const val WRST_PROTOCOL_VERSION = 2
+    private const val WRST_PROTOCOL_VERSION = 4
 
     // Decode the JSON args array JS passes to a native module into a List.
     private fun decodeModuleArgs(json: String): List<Any?> {
@@ -78,6 +78,19 @@ object JsRuntimeManager {
         val app = context.applicationContext
         prefs = app.getSharedPreferences("wrst_storage", Context.MODE_PRIVATE)
 
+        Permissions.init(app)
+
+        // Engine motion sensors: sample → call(callbackId, sampleJson) in JS.
+        Sensors.init(app)
+        Sensors.setSampleHandler { callbackId, sampleJson ->
+            timerScope.launch { call(callbackId, sampleJson) }
+        }
+
+        // Streaming native modules push to JS callbacks through the same path.
+        WrstNativeModules.emitter = { callbackId, valueJson ->
+            timerScope.launch { call(callbackId, valueJson) }
+        }
+
         val config = app.resources.configuration
         deviceInfoJson = JSONObject().apply {
             put("platform", "wear-os")
@@ -90,6 +103,8 @@ object JsRuntimeManager {
     }
 
     private suspend fun createRuntime() = withContext(Dispatchers.IO) {
+        // Stop any sensor listeners from a previous bundle before reloading.
+        Sensors.stopAll()
         quickJs?.close()
         quickJs = QuickJs.create(Dispatchers.IO).apply {
             define("native") {
@@ -174,6 +189,29 @@ object JsRuntimeManager {
                     val argsJson = args.getOrNull(1) as? String ?: "[]"
                     val handler = WrstNativeModules.handler(name) ?: return@function null
                     encodeModuleResult(handler(decodeModuleArgs(argsJson)))
+                }
+                // Engine sensors: native samples → call(callbackId, sampleJson).
+                function("nativeSensorStart") { args: Array<Any?> ->
+                    val type = args.getOrNull(0) as? String ?: return@function
+                    val callbackId = args.getOrNull(1) as? String ?: return@function
+                    val intervalMs = (args.getOrNull(2) as? Number)?.toLong() ?: 100L
+                    Sensors.start(type, callbackId, intervalMs)
+                }
+                function("nativeSensorStop") { args: Array<Any?> ->
+                    val callbackId = args.getOrNull(0) as? String ?: return@function
+                    Sensors.stop(callbackId)
+                }
+                // Runtime permissions (layer 2): current status (sync) + request.
+                function("nativePermissionStatus") { args: Array<Any?> ->
+                    val name = args.getOrNull(0) as? String ?: return@function "undetermined"
+                    Permissions.status(name)
+                }
+                function("nativePermissionRequest") { args: Array<Any?> ->
+                    val name = args.getOrNull(0) as? String ?: return@function
+                    val resolveId = args.getOrNull(1) as? String ?: return@function
+                    Permissions.request(name) { status ->
+                        timerScope.launch { call(resolveId, JSONObject.quote(status)) }
+                    }
                 }
                 function("nativeSetAppConfig") { args: Array<Any?> ->
                     val color = args.getOrNull(0) as? String

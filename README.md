@@ -112,7 +112,7 @@ it from `node_modules`. The JS↔native wire format is documented in
 ## Native modules (the extension hook)
 
 The engine ships the universal, permission-light capabilities (timers, `fetch`,
-`localStorage`, device info, …). For anything that needs a platform framework or
+`localStorage`, device info, ...). For anything that needs a platform framework or
 a permission - sensors, HealthKit, Bluetooth, NFC - you register a **native
 module** in your own thin shell, and call it from JS. **No engine fork, no engine
 rebuild** - the runtime exposes one dispatch channel and your module rides it.
@@ -120,12 +120,13 @@ rebuild** - the runtime exposes one dispatch channel and your module rides it.
 **JS** (anywhere in your app):
 
 ```ts
-import { callNativeModule, createNativeModule } from "wrst";
+import { callNativeModule, getNativeModule } from "wrst";
 
 const result = callNativeModule<string>("hello"); // -> "hello from native module"
 
-// or a typed, reusable handle:
-const hello = createNativeModule<[], string>("hello");
+// or a typed, reusable caller handle (the native side registers it; this just
+// binds the name):
+const hello = getNativeModule<[], string>("hello");
 hello();
 ```
 
@@ -133,7 +134,7 @@ Args are JSON-serialized across the bridge and the return value is JSON-parsed
 back. Register the module once, in the native shell:
 
 Registration uses the **same call shape on both platforms** -
-`WrstNativeModules.register(name) { … }` - so adding a module is one register
+`WrstNativeModules.register(name) { ... }` - so adding a module is one register
 call per side.
 
 **Android** - `android/app/.../MainActivity.kt` (before `setContent`):
@@ -157,6 +158,51 @@ WrstNativeModules.register("hello") { _ in
 The `example/` app ships exactly this under the **Native Module** menu screen.
 For streaming data (e.g. sensor samples), a module calls back a registered JS
 callback instead of returning - same mechanism as timers/`fetch`.
+
+## Sensors
+
+The **motion sensors** (accelerometer, gyroscope, magnetometer) are built into
+the engine and need **no permission** on either platform - so they work in a
+bare app with zero prompts. They're streams: subscribe with a callback, and
+unsubscribe to stop (e.g. from a `useEffect` cleanup).
+
+```tsx
+import { Sensors, useState, useEffect } from "wrst";
+
+const [a, setA] = useState({ x: 0, y: 0, z: 0, timestamp: 0 });
+
+useEffect(() => {
+  const sub = Sensors.accelerometer((s) => setA(s), { intervalMs: 200 });
+  return () => sub.unsubscribe();
+}, []);
+```
+
+Units are normalized across platforms: accelerometer **m/s²**, gyroscope
+**rad/s**, magnetometer **µT**; each sample is `{ x, y, z, timestamp }` (epoch
+ms). There's also a generic `subscribeSensor(type, cb, opts)`. Permission-gated
+sensors (heart rate, etc.) are native modules, not engine built-ins.
+
+## Permissions
+
+A bare app declares **no** permissions and prompts for nothing. To add one,
+uncomment it in `wrst.config.ts` and do `wrst sync` (also run by `run-*`/`build-*`)
+adds it to `ios/Info.plist` + `android/.../AndroidManifest.xml`, and **removes**
+any you re-comment - so the config is the single source of truth.
+
+```ts
+// wrst.config.ts
+permissions: {
+  heartRate:  { reason: "Reads your heart rate." },   // iOS HealthKit · Android BODY_SENSORS
+  location:   { reason: "Shows your route." },         // iOS Location · Android ACCESS_FINE/COARSE_LOCATION
+  // activity / microphone / bluetooth / notifications also available
+},
+```
+
+The `reason` is shown in the iOS permission dialog (Apple requires it; Android's
+wording is system-set). Each permission maps to the right platform keys
+automatically. Two notes: HealthKit (`heartRate` on iOS) also needs its
+capability enabled in Xcode (beyond Info.plist), and the **runtime** request +
+granted/denied result is handled by the sensor's native module, not the config.
 
 ## Requirements
 

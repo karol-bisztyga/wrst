@@ -9,5 +9,8 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<!-- For the example sensor native modules (barometer / stepCount). -->
+	<key>NSMotionUsageDescription</key>
+	<string>Reads barometer and step data for the sensors demo.</string>
 </dict>
 </plist>

@@ -25,6 +25,10 @@ extern void swift_native_storage_remove(const char *key);
 extern void swift_native_storage_clear(void);
 extern void swift_native_fetch(const char *url, const char *options, const char *resolve_id, const char *reject_id);
 extern char *swift_native_module_call(const char *name, const char *args_json); // malloc'd JSON or NULL; we free
+extern void swift_native_sensor_start(const char *type, const char *callback_id, double interval_ms);
+extern void swift_native_sensor_stop(const char *callback_id);
+extern char *swift_native_permission_status(const char *name); // malloc'd status string; we free
+extern void swift_native_permission_request(const char *name, const char *resolve_id);
 
 struct QJSBridge {
     JSRuntime *rt;
@@ -267,6 +271,54 @@ static JSValue n_module_call(JSContext *ctx, JSValueConst this_val, int argc, JS
     return result;
 }
 
+// Engine sensors: native.nativeSensorStart(type, callbackId, intervalMs) /
+// nativeSensorStop(callbackId). Native samples are pushed back via call(id, json).
+static JSValue n_sensor_start(JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) {
+    if (argc >= 2) {
+        const char *type = JS_ToCString(ctx, argv[0]);
+        const char *cb = JS_ToCString(ctx, argv[1]);
+        double interval = 100;
+        if (argc >= 3) JS_ToFloat64(ctx, &interval, argv[2]);
+        if (type && cb) swift_native_sensor_start(type, cb, interval);
+        if (type) JS_FreeCString(ctx, type);
+        if (cb) JS_FreeCString(ctx, cb);
+    }
+    return JS_UNDEFINED;
+}
+
+static JSValue n_sensor_stop(JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) {
+    if (argc >= 1) {
+        const char *cb = JS_ToCString(ctx, argv[0]);
+        if (cb) { swift_native_sensor_stop(cb); JS_FreeCString(ctx, cb); }
+    }
+    return JS_UNDEFINED;
+}
+
+// Runtime permissions: nativePermissionStatus(name) -> status string (sync) /
+// nativePermissionRequest(name, resolveId) -> void; native calls call(resolveId, status).
+static JSValue n_permission_status(JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) {
+    if (argc < 1) return JS_NULL;
+    const char *name = JS_ToCString(ctx, argv[0]);
+    JSValue result = JS_NULL;
+    if (name) {
+        char *s = swift_native_permission_status(name);
+        if (s) { result = JS_NewString(ctx, s); free(s); }
+        JS_FreeCString(ctx, name);
+    }
+    return result;
+}
+
+static JSValue n_permission_request(JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) {
+    if (argc >= 2) {
+        const char *name = JS_ToCString(ctx, argv[0]);
+        const char *rid = JS_ToCString(ctx, argv[1]);
+        if (name && rid) swift_native_permission_request(name, rid);
+        if (name) JS_FreeCString(ctx, name);
+        if (rid) JS_FreeCString(ctx, rid);
+    }
+    return JS_UNDEFINED;
+}
+
 static void install_native(JSContext *ctx) {
     JSValue global = JS_GetGlobalObject(ctx);
     JSValue native = JS_NewObject(ctx);
@@ -288,6 +340,10 @@ static void install_native(JSContext *ctx) {
     JS_SetPropertyStr(ctx, native, "nativeClearInterval", JS_NewCFunction(ctx, n_clear_interval, "nativeClearInterval", 1));
     JS_SetPropertyStr(ctx, native, "nativeNavigate", JS_NewCFunction(ctx, n_navigate, "nativeNavigate", 0));
     JS_SetPropertyStr(ctx, native, "nativeModuleCall", JS_NewCFunction(ctx, n_module_call, "nativeModuleCall", 2));
+    JS_SetPropertyStr(ctx, native, "nativeSensorStart", JS_NewCFunction(ctx, n_sensor_start, "nativeSensorStart", 3));
+    JS_SetPropertyStr(ctx, native, "nativeSensorStop", JS_NewCFunction(ctx, n_sensor_stop, "nativeSensorStop", 1));
+    JS_SetPropertyStr(ctx, native, "nativePermissionStatus", JS_NewCFunction(ctx, n_permission_status, "nativePermissionStatus", 1));
+    JS_SetPropertyStr(ctx, native, "nativePermissionRequest", JS_NewCFunction(ctx, n_permission_request, "nativePermissionRequest", 2));
 
     JS_SetPropertyStr(ctx, native, "nativeStorageGet", JS_NewCFunction(ctx, n_storage_get, "nativeStorageGet", 1));
     JS_SetPropertyStr(ctx, native, "nativeStorageSet", JS_NewCFunction(ctx, n_storage_set, "nativeStorageSet", 2));

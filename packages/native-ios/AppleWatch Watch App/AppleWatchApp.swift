@@ -20,6 +20,9 @@ struct AppleWatch_Watch_AppApp: App {
             print("hello from native module")
             return "hello from native module"
         }
+
+        // Sensor native modules (barometer / stepCount). See SensorModules.swift.
+        SensorModules.register()
     }
 
     var body: some Scene {

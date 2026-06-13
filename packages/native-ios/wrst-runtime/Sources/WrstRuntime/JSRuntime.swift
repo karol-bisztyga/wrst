@@ -9,7 +9,7 @@ import CQuickJS
 final class JSRuntime {
     // The JS↔native wire-contract version this host implements (see CONTRACT.md).
     // Must match the bundle's globalThis.__WRST_PROTOCOL__.
-    static let protocolVersion = 2
+    static let protocolVersion = 4
 
     private var bridge: OpaquePointer?
     private var onError: (String) -> Void = { _ in }
@@ -21,6 +21,7 @@ final class JSRuntime {
     func load(_ code: String) {
         if let bridge { qjs_bridge_destroy(bridge) }
         TimerManager.shared.clearAll()
+        WrstSensors.shared.stopAll()
         StateRegistry.shared.clear()
         ListCache.shared.clear()
         AppConfig.shared.reset()

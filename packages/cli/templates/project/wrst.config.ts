@@ -16,4 +16,20 @@ export default {
     httpPort: 8081,
     wsPort: 8082,
   },
+
+  // Permissions. Uncomment the ones your app needs - `wrst sync` (also run by
+  // run-*/build-*) adds/removes them to/from Info.plist/AndroidManifest.xml.
+  // A bare app declares none, so it prompts for nothing.
+  // `reason` is shown in the iOS permission dialog (Apple requires it;
+  // Android's wording is system-set).
+  // Engine sensors (accelerometer, gyroscope, magnetometer)
+  // need no permission and are intentionally not listed.
+  permissions: {
+    // heartRate:     { reason: "Reads your heart rate." },        // iOS HealthKit (also enable the HealthKit capability in Xcode) · Android BODY_SENSORS
+    // activity:      { reason: "Counts your steps and motion." }, // iOS Motion · Android ACTIVITY_RECOGNITION
+    // location:      { reason: "Shows your route." },             // iOS Location · Android ACCESS_FINE/COARSE_LOCATION
+    // microphone:    { reason: "Records audio." },                // iOS Microphone · Android RECORD_AUDIO
+    // bluetooth:     { reason: "Connects to nearby devices." },   // iOS Bluetooth · Android BLUETOOTH_CONNECT/SCAN
+    // notifications: { reason: "Sends you alerts." },             // Android POST_NOTIFICATIONS (iOS: runtime only)
+  },
 };

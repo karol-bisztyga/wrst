@@ -23,4 +23,13 @@ object WrstNativeModules {
     }
 
     internal fun handler(name: String): ((List<Any?>) -> Any?)? = handlers[name]
+
+    // Push a value to a JS callback id - for *streaming* modules (e.g. sensors):
+    // JS hands the module a callback id, the module calls emit() per sample. The
+    // runtime installs the emitter (it owns the JS call path); modules just emit.
+    internal var emitter: ((callbackId: String, valueJson: String) -> Unit)? = null
+
+    fun emit(callbackId: String, valueJson: String) {
+        emitter?.invoke(callbackId, valueJson)
+    }
 }

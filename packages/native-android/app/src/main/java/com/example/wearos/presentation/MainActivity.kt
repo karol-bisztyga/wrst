@@ -21,6 +21,10 @@ class MainActivity : ComponentActivity() {
             "hello from native module"
         }
 
+        // Sensor native modules (barometer / ambientLight / stepCount / heartRate).
+        // Permissions are now requested from JS via requestPermission(...).
+        SensorModules.register(this)
+
         setContent { WrstHost() }
     }
 }

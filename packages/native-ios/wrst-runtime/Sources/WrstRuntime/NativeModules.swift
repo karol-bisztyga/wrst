@@ -33,6 +33,16 @@ public final class WrstNativeModules {
         shared.register(name, handler)
     }
 
+    // Push a value to a JS callback id - for *streaming* modules (e.g. sensors):
+    // JS hands the module a callback id, the module calls emit() per sample.
+    public func emit(_ callbackId: String, _ valueJSON: String) {
+        RuntimeBridge.shared.callJSON(callbackId, valueJSON)
+    }
+
+    public static func emit(_ callbackId: String, _ valueJSON: String) {
+        shared.emit(callbackId, valueJSON)
+    }
+
     // Invoked from swift_native_module_call. Decodes args JSON, runs the handler,
     // and JSON-encodes the result. Returns nil if no module / no result.
     func call(_ name: String, argsJSON: String) -> String? {

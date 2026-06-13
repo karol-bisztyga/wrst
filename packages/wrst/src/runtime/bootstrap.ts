@@ -7,7 +7,7 @@ import "./globals.ts";
 import "./fetch.ts";
 import "./localStorage.ts";
 import "./device.ts";
-import { runInitialEffects } from "./effects.ts";
+import { runInitialEffects, teardownEffects } from "./effects.ts";
 import { computed, clearComputedEntries } from "./computed.ts";
 import { Component } from "./types.ts";
 
@@ -19,6 +19,9 @@ export function start(App: Component): void {
   (globalThis as any).jsx = jsx;
   (globalThis as any).computed = computed;
   (globalThis as any).render = () => {
+    // A full render is a fresh mount of the current screen: unmount the previous
+    // one's effects (runs their cleanups, e.g. sensor unsubscribe) first.
+    teardownEffects();
     clearComputedEntries();
     const tree = App();
     runInitialEffects();

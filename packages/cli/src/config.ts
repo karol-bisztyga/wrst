@@ -9,6 +9,10 @@ export type WrstConfig = {
   ios?: { bundleId?: string };
   android?: { applicationId?: string };
   server?: { httpPort?: number; wsPort?: number };
+  // App-level permissions to declare in the native projects. Keyed by a catalog
+  // name (see permissions.ts: heartRate, activity, location, microphone,
+  // bluetooth, notifications). `reason` is the iOS permission-dialog string.
+  permissions?: Record<string, { reason?: string }>;
 };
 
 // Loads wrst.config.ts from a project dir. tsx transforms the .ts config

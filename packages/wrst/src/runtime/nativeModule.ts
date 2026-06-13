@@ -7,6 +7,8 @@
 // are built this way; the engine only provides this one dispatch channel
 // (`native.nativeModuleCall`), not a new bridge method per capability.
 
+import { register, registry } from "../registry/functions.ts";
+
 type NativeBridge = {
   nativeModuleCall?: (name: string, argsJson: string) => string | null;
 };
@@ -32,12 +34,35 @@ export function callNativeModule<Result = unknown>(
   }
 }
 
-// Typed convenience wrapper for a single named module:
-//   const hello = createNativeModule<[], string>("hello");
+// Returns a typed, reusable caller bound to an (already host-registered) native
+// module - it doesn't create anything, the native side does via register():
+//   const hello = getNativeModule<[], string>("hello");
 //   hello(); // -> "hello from native module"
-export function createNativeModule<
+export function getNativeModule<
   Args extends unknown[] = unknown[],
   Result = unknown,
 >(name: string): (...args: Args) => Result | undefined {
   return (...args: Args) => callNativeModule<Result>(name, ...args);
+}
+
+export type NativeStreamSubscription = { unsubscribe: () => void };
+
+// Subscribe to a *streaming* native module (e.g. a sensor module). The module
+// is called with `{ action: "start", callbackId, ...options }`; it then pushes
+// each event to that callback via the native `emit()`. `unsubscribe()` calls it
+// with `{ action: "stop", callbackId }`. This is the streaming counterpart to
+// callNativeModule, built on the same hook.
+export function subscribeNativeModule<Event = unknown>(
+  name: string,
+  onEvent: (event: Event) => void,
+  options?: Record<string, unknown>,
+): NativeStreamSubscription {
+  const callbackId = register((event: Event) => onEvent(event));
+  callNativeModule(name, { action: "start", callbackId, ...(options ?? {}) });
+  return {
+    unsubscribe() {
+      registry.delete(callbackId);
+      callNativeModule(name, { action: "stop", callbackId });
+    },
+  };
 }

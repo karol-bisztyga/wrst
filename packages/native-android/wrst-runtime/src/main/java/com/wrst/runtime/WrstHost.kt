@@ -1,5 +1,7 @@
 package com.wrst.runtime
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,12 +26,67 @@ import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 // Native capabilities (the extension hook) are registered separately via
 // `WrstNativeModules.register(...)` and reached from app JS through
 // `callNativeModule(name, ...args)`.
+
+// Coalesces runtime permission requests (layer 2): multiple requestPermission()
+// calls in the same tick become ONE system dialog, and requests arriving while a
+// dialog is in flight are queued. All state is touched only on the main thread
+// (every entry point hops through `post`), so no locking is needed.
+private class PermissionCoordinator(
+    private val launch: (Array<String>) -> Unit,
+    private val post: (() -> Unit) -> Unit,
+) {
+    private val queue = mutableListOf<Pair<List<String>, (Boolean) -> Unit>>()
+    private var inFlight: List<Pair<List<String>, (Boolean) -> Unit>>? = null
+    private var scheduled = false
+
+    fun request(perms: List<String>, cb: (Boolean) -> Unit) {
+        post {
+            queue.add(perms to cb)
+            if (!scheduled) {
+                scheduled = true
+                post { scheduled = false; flush() }
+            }
+        }
+    }
+
+    private fun flush() {
+        if (inFlight != null || queue.isEmpty()) return
+        val batch = queue.toList()
+        queue.clear()
+        inFlight = batch
+        launch(batch.flatMap { it.first }.distinct().toTypedArray())
+    }
+
+    fun onResult(result: Map<String, Boolean>) {
+        val batch = inFlight ?: return
+        inFlight = null
+        batch.forEach { (perms, cb) -> cb(perms.all { result[it] == true }) }
+        if (queue.isNotEmpty()) post { flush() } // run anything queued during the dialog
+    }
+}
+
 @Composable
 fun WrstHost() {
     val context = LocalContext.current
     val socketClient = remember { SocketClient() }
     val renderer = remember { Renderer() }
     val messageState = remember { mutableStateOf("") }
+
+    // Runtime permission requests (layer 2). The launcher must live in the
+    // composition; JS requests route through the coordinator (which coalesces
+    // concurrent requests into one dialog and queues any during an in-flight one).
+    val mainHandler = remember { android.os.Handler(android.os.Looper.getMainLooper()) }
+    val launcherRef = remember { arrayOfNulls<(Array<String>) -> Unit>(1) }
+    val permCoordinator = remember {
+        PermissionCoordinator(
+            launch = { perms -> launcherRef[0]?.invoke(perms) },
+            post = { r -> mainHandler.post(r) },
+        )
+    }
+    val permLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions(),
+    ) { result -> permCoordinator.onResult(result) }
+    launcherRef[0] = { perms -> permLauncher.launch(perms) }
 
     // Bumped on every bundle pull so a reload re-runs even when the bundle bytes
     // are identical (an unchanged bundle wouldn't change messageState).
@@ -40,6 +97,9 @@ fun WrstHost() {
     // build type at runtime via FLAG_DEBUGGABLE rather than BuildConfig.DEBUG).
     DisposableEffect(Unit) {
         JsRuntimeManager.init(context)
+        // Route JS permission requests to the coordinator (it hops to main,
+        // coalesces same-tick requests into one dialog, and queues the rest).
+        Permissions.requester = { perms, result -> permCoordinator.request(perms, result) }
         val isDebuggable =
             (context.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
         if (isDebuggable) {
@@ -50,7 +110,10 @@ fun WrstHost() {
             ErrorHandler.onReload = { socketClient.pullCode() }
             socketClient.connect()
             socketClient.pullCode()
-            onDispose { socketClient.disconnect() }
+            onDispose {
+                Permissions.requester = null
+                socketClient.disconnect()
+            }
         } else {
             val bundle = try {
                 context.assets.open("bundle.js").bufferedReader().use { it.readText() }
@@ -59,7 +122,7 @@ fun WrstHost() {
             }
             messageState.value = bundle
             loadCounter.value++
-            onDispose { }
+            onDispose { Permissions.requester = null }
         }
     }
 

@@ -27,6 +27,9 @@ dependencies {
     implementation(libs.compose.material)
     implementation(libs.compose.foundation)
     implementation(libs.compose.navigation)
+    // For the runtime permission launcher (rememberLauncherForActivityResult);
+    // also brings androidx.core (ContextCompat) transitively.
+    implementation(libs.activity.compose)
     // api: the consuming app links QuickJS transitively (it's part of the runtime).
     api(libs.quickjs.kt.v105)
     implementation(libs.okhttp)

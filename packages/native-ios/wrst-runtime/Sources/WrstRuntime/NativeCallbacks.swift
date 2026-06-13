@@ -151,6 +151,40 @@ public nonisolated func swift_native_module_call(_ name: UnsafePointer<CChar>?,
     return strdup(resultJSON)
 }
 
+// Engine sensors: start/stop a motion-sensor stream for a JS callback id.
+@_cdecl("swift_native_sensor_start")
+public nonisolated func swift_native_sensor_start(_ type: UnsafePointer<CChar>?,
+                                                  _ callbackId: UnsafePointer<CChar>?,
+                                                  _ intervalMs: Double) {
+    guard let type, let callbackId else { return }
+    let t = String(cString: type), id = String(cString: callbackId)
+    MainActor.assumeIsolated { WrstSensors.shared.start(type: t, callbackId: id, intervalMs: intervalMs) }
+}
+
+@_cdecl("swift_native_sensor_stop")
+public nonisolated func swift_native_sensor_stop(_ callbackId: UnsafePointer<CChar>?) {
+    guard let callbackId else { return }
+    let id = String(cString: callbackId)
+    MainActor.assumeIsolated { WrstSensors.shared.stop(id) }
+}
+
+// Runtime permissions: current status (sync, returned to JS) + async request.
+@_cdecl("swift_native_permission_status")
+public nonisolated func swift_native_permission_status(_ name: UnsafePointer<CChar>?) -> UnsafeMutablePointer<CChar>? {
+    guard let name else { return nil }
+    return strdup(Permissions.status(String(cString: name)))
+}
+
+@_cdecl("swift_native_permission_request")
+public nonisolated func swift_native_permission_request(_ name: UnsafePointer<CChar>?,
+                                                        _ resolveId: UnsafePointer<CChar>?) {
+    guard let name, let resolveId else { return }
+    let n = String(cString: name), rid = String(cString: resolveId)
+    Permissions.request(n) { status in
+        Task { @MainActor in RuntimeBridge.shared.callJSON(rid, "\"\(status)\"") }
+    }
+}
+
 @_cdecl("swift_native_fetch")
 public nonisolated func swift_native_fetch(_ url: UnsafePointer<CChar>?,
                                     _ options: UnsafePointer<CChar>?,

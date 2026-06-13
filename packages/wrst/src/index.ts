@@ -32,7 +32,33 @@ export { createAppConfig } from "./runtime/appConfig.ts";
 export { Device } from "./runtime/device.ts";
 
 // Native modules - call host-registered native capabilities (the extension hook).
-export { callNativeModule, createNativeModule } from "./runtime/nativeModule.ts";
+export {
+  callNativeModule,
+  getNativeModule,
+  subscribeNativeModule,
+} from "./runtime/nativeModule.ts";
+export type { NativeStreamSubscription } from "./runtime/nativeModule.ts";
+export { useNativeModule } from "./runtime/hooks/useNativeModule.ts";
+
+// Runtime permissions (request + status).
+export {
+  requestPermission,
+  getPermissionStatus,
+} from "./runtime/permissions.ts";
+export type {
+  PermissionName,
+  PermissionStatus,
+} from "./runtime/permissions.ts";
+
+// Engine motion sensors (accelerometer / gyroscope / magnetometer).
+export { subscribeSensor, Sensors } from "./runtime/sensors.ts";
+export { useSensor } from "./runtime/hooks/useSensor.ts";
+export type {
+  SensorType,
+  SensorSample,
+  SensorSubscription,
+  SensorOptions,
+} from "./runtime/sensors.ts";
 
 // Types.
 export type {

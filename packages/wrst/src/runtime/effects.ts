@@ -18,6 +18,15 @@ export function registerEffect(fn: EffectFn, deps: string[] | null): void {
   effects.push({ fn, deps, cleanup: undefined, mounted: false });
 }
 
+// Tear down every registered effect (calling its cleanup), then clear the list.
+// Run at the start of each full render() so navigating/reloading unmounts the
+// previous tree's effects - e.g. a screen's sensor subscriptions stop. The
+// fresh render then re-registers and re-mounts the current screen's effects.
+export function teardownEffects(): void {
+  effects.forEach((effect) => effect.cleanup?.());
+  effects.length = 0;
+}
+
 export function runInitialEffects(): void {
   effects.forEach((effect) => {
     if (!effect.mounted) {
