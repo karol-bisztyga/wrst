@@ -19,6 +19,42 @@ struct ViewStyle {
     var padding = EdgeInsets()
     var opacity: Double = 1
     var offset = CGSize.zero
+    var gradient: GradientSpec?
+    var shadow: ShadowSpec?
+
+    // Gradient takes precedence over a solid color (mirrors StyleParser.kt).
+    var backgroundFill: AnyShapeStyle {
+        if let g = gradient { return g.makeStyle() }
+        return AnyShapeStyle(backgroundColor ?? .clear)
+    }
+}
+
+struct GradientSpec {
+    var colors: [Color]
+    var type: String       // "linear" | "radial"
+    var direction: String  // "vertical" | "horizontal" | "diagonal" (linear only)
+
+    func makeStyle() -> AnyShapeStyle {
+        if type == "radial" {
+            return AnyShapeStyle(
+                RadialGradient(colors: colors, center: .center, startRadius: 0, endRadius: 80))
+        }
+        let points: (UnitPoint, UnitPoint)
+        switch direction {
+        case "horizontal": points = (.leading, .trailing)
+        case "diagonal": points = (.topLeading, .bottomTrailing)
+        default: points = (.top, .bottom)
+        }
+        return AnyShapeStyle(
+            LinearGradient(colors: colors, startPoint: points.0, endPoint: points.1))
+    }
+}
+
+struct ShadowSpec {
+    var color: Color
+    var radius: CGFloat
+    var x: CGFloat
+    var y: CGFloat
 }
 
 // Resolved text style (mirrors TextStyleParser.kt).
@@ -59,6 +95,8 @@ final class StyleParser: PropParser {
         s.opacity = Double(parseFloat(resolve(style["opacity"]), fallback: 1))
         s.offset = CGSize(width: parseFloat(resolve(style["x"])),
                           height: parseFloat(resolve(style["y"])))
+        s.gradient = parseGradient(resolve(style["gradient"]))
+        s.shadow = parseShadow(resolve(style["shadow"]))
         return s
     }
 
@@ -67,6 +105,26 @@ final class StyleParser: PropParser {
         if str == "fill" { return .fill }
         if let d = Double(str), d > 0 { return .points(CGFloat(d)) }
         return nil
+    }
+
+    // Resolve nested fields so state-driven type/direction/colors are read *and*
+    // dependency-tracked (so the view re-renders when they change).
+    private func parseGradient(_ value: Any?) -> GradientSpec? {
+        guard let g = value as? [String: Any] else { return nil }
+        let colors = ((g["colors"] as? [Any]) ?? []).compactMap { parseColor(resolve($0) as? String) }
+        guard colors.count >= 2 else { return nil }
+        return GradientSpec(colors: colors,
+                            type: (resolve(g["type"]) as? String) ?? "linear",
+                            direction: (resolve(g["direction"]) as? String) ?? "vertical")
+    }
+
+    private func parseShadow(_ value: Any?) -> ShadowSpec? {
+        guard let sh = value as? [String: Any] else { return nil }
+        let radius = parseFloat(resolve(sh["radius"]))
+        guard radius > 0 else { return nil }
+        return ShadowSpec(color: parseColor(resolve(sh["color"]) as? String) ?? Color.black.opacity(0.4),
+                          radius: radius,
+                          x: parseFloat(resolve(sh["x"])), y: parseFloat(resolve(sh["y"])))
     }
 }
 

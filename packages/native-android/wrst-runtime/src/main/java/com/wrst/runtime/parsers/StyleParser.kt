@@ -6,7 +6,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.DefaultShadowColor
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.unit.dp
 import com.wrst.runtime.StateRegistry
@@ -31,6 +34,9 @@ class StyleParser: PropParser() {
         val y = parseFloat(StateRegistry.resolve(props.opt("y")))
 
         val opacity = (StateRegistry.resolve(props.opt("opacity")) as? Number)?.toFloat() ?: 1.0f
+
+        val brush = parseGradient(props.optJSONObject("gradient"))
+        val shadowObj = props.optJSONObject("shadow")
 
         var modifier: Modifier = Modifier
 
@@ -57,12 +63,29 @@ class StyleParser: PropParser() {
         // shape
         val shape = RoundedCornerShape(borderRadius.dp)
 
+        // shadow (drawn behind, before clip/background)
+        if (shadowObj != null) {
+            val sRadius = parseFloat(StateRegistry.resolve(shadowObj.opt("radius")))
+            if (sRadius > 0f) {
+                val sColor = parseColor(StateRegistry.resolve(shadowObj.opt("color")) as? String)
+                val resolved = if (sColor != Color.Unspecified) sColor else DefaultShadowColor
+                modifier = modifier.shadow(
+                    elevation = sRadius.dp,
+                    shape = shape,
+                    ambientColor = resolved,
+                    spotColor = resolved,
+                )
+            }
+        }
+
         if (borderRadius > 0f) {
             modifier = modifier.clip(shape)
         }
 
-        // background
-        if (backgroundColor != Color.Unspecified) {
+        // background - a gradient takes precedence over a solid color
+        if (brush != null) {
+            modifier = modifier.background(brush = brush, shape = shape)
+        } else if (backgroundColor != Color.Unspecified) {
             modifier = modifier.background(
                 color = backgroundColor,
                 shape = shape
@@ -96,5 +119,27 @@ class StyleParser: PropParser() {
         }
 
         return modifier
+    }
+
+    // Parse a { type, colors, direction } gradient into a Compose Brush, or null.
+    internal fun parseGradient(gradient: JSONObject?): Brush? {
+        if (gradient == null) return null
+        val arr = gradient.optJSONArray("colors") ?: return null
+        val colors = (0 until arr.length())
+            .map { parseColor(StateRegistry.resolve(arr.opt(it)) as? String) }
+            .filter { it != Color.Unspecified }
+        if (colors.size < 2) return null
+        // Resolve nested fields so state-driven type/direction are read *and*
+        // dependency-tracked (so the view re-renders when they change).
+        val type = StateRegistry.resolve(gradient.opt("type")) as? String ?: "linear"
+        val direction = StateRegistry.resolve(gradient.opt("direction")) as? String ?: "vertical"
+        return when (type) {
+            "radial" -> Brush.radialGradient(colors)
+            else -> when (direction) {
+                "horizontal" -> Brush.horizontalGradient(colors)
+                "diagonal" -> Brush.linearGradient(colors)
+                else -> Brush.verticalGradient(colors)
+            }
+        }
     }
 }

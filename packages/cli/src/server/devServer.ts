@@ -12,6 +12,8 @@ export type DevServerOptions = {
   outdir: string;
   httpPort: number;
   wsPort: number;
+  /** Folder of static assets to serve at /assets (optional). */
+  assetsDir?: string;
 };
 
 function setupKeys(socket: ReturnType<typeof startSocketServer>): void {
@@ -49,7 +51,13 @@ export async function startDevServer(opts: DevServerOptions): Promise<void> {
     onLog: (device, level, message) => logger.appLog(device, level, message),
   });
 
-  startHttpServer(bundlePath, bundleMinPath, () => currentError, opts.httpPort);
+  startHttpServer(
+    bundlePath,
+    bundleMinPath,
+    () => currentError,
+    opts.httpPort,
+    opts.assetsDir,
+  );
 
   setupKeys(socket);
   logger.banner(

@@ -6,8 +6,16 @@ export function startHttpServer(
   bundleMinPath: string,
   getError: () => string | null,
   port: number,
+  assetsDir?: string,
 ) {
   const app = express();
+
+  // Project-local images/fonts: <Image src="logo.png"> resolves (in dev) to
+  // GET /assets/logo.png, served straight from the project's assets folder so
+  // adding/changing an asset needs no native rebuild.
+  if (assetsDir) {
+    app.use("/assets", express.static(assetsDir));
+  }
 
   // When there's a current build error, the bundle endpoints return it (422)
   // instead of stale code - so every pull (including a manual reload) reflects

@@ -19,3 +19,8 @@ export { ScrollView } from "./ScrollView.ts";
 export { ScalingScrollView } from "./ScalingScrollView.ts";
 export { HorizontalView } from "./HorizontalView.ts";
 export { VerticalView } from "./VerticalView.ts";
+export { Icon } from "./Icon.ts";
+export type { IconName } from "./Icon.ts";
+export { Progress } from "./Progress.ts";
+export { Image } from "./Image.ts";
+export type { ImageResizeMode } from "./Image.ts";

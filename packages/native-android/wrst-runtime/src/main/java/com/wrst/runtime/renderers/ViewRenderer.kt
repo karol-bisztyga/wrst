@@ -19,7 +19,8 @@ object ViewRenderer {
 
         // Log.d("ViewRenderer", "rendering View [$props][$children]")
 
-        val modifier = StyleParser().parse(style)
+        val animate = StateRegistry.resolve(props.opt("animate")) as? Boolean ?: false
+        val modifier = if (animate) animatedStyleModifier(style) else StyleParser().parse(style)
         val (contentAlignment, _, _) = ContainerStyleParser().parse(style)
 
         Box(modifier = modifier, contentAlignment = contentAlignment) {

@@ -52,6 +52,9 @@ struct NodeView: View, Equatable {
     private var content: some View {
         switch type {
         case "Text": textView
+        case "Icon": iconView
+        case "Image": imageView
+        case "Progress": progressView
         case "View": boxContainer
         case "VerticalView": columnContainer
         case "HorizontalView": rowContainer
@@ -72,22 +75,50 @@ struct NodeView: View, Equatable {
 
     private var boxContainer: some View {
         let a = ContainerStyleParser().parse(style)
+        let token = childAnimationToken()
         return ZStack(alignment: a.box) { childViews }
             .viewStyle(StyleParser().parse(style), alignment: a.box)
+            .geometryGroup()
+            .animation(token != nil ? .default : nil, value: token ?? "")
+    }
+
+    private static func styleToken(_ s: ViewStyle) -> String {
+        "\(String(describing: s.backgroundColor))|\(String(describing: s.width))"
+            + "|\(String(describing: s.height))|\(s.opacity)|\(s.borderRadius)"
+            + "|\(s.offset.width),\(s.offset.height)|\(String(describing: s.gradient?.colors))"
+    }
+
+    private func childAnimationToken() -> String? {
+        var parts: [String] = []
+        for child in children {
+            guard let node = child as? [String: Any],
+                  let p = node["props"] as? [String: Any],
+                  StateRegistry.shared.resolve(p["animate"]) as? Bool == true,
+                  let st = StateRegistry.shared.resolve(p["style"]) as? [String: Any]
+            else { continue }
+            parts.append(Self.styleToken(StyleParser().parse(st)))
+        }
+        return parts.isEmpty ? nil : parts.joined(separator: ";")
     }
 
     private var columnContainer: some View {
         let a = ContainerStyleParser().parse(style)
+        let token = childAnimationToken()
         return VStack(alignment: a.columnHorizontal, spacing: 0) { childViews }
             .viewStyle(StyleParser().parse(style),
                        alignment: Alignment(horizontal: a.columnHorizontal, vertical: .top))
+            .geometryGroup()
+            .animation(token != nil ? .default : nil, value: token ?? "")
     }
 
     private var rowContainer: some View {
         let a = ContainerStyleParser().parse(style)
+        let token = childAnimationToken()
         return HStack(alignment: a.rowVertical, spacing: 0) { childViews }
             .viewStyle(StyleParser().parse(style),
                        alignment: Alignment(horizontal: .leading, vertical: a.rowVertical))
+            .geometryGroup()
+            .animation(token != nil ? .default : nil, value: token ?? "")
     }
 
     private var scrollContainer: some View {
@@ -160,6 +191,83 @@ struct NodeView: View, Equatable {
             .lineSpacing(ts.lineSpacing)
             .viewStyle(StyleParser().parse(style),
                        alignment: Alignment(horizontal: horizontal, vertical: .top))
+    }
+
+    // MARK: - Progress
+
+    @ViewBuilder
+    private var progressView: some View {
+        let parser = StyleParser()
+        let size = parser.parseFloat(StateRegistry.shared.resolve(props["size"]), fallback: 40)
+        let tint = parser.parseColor(StateRegistry.shared.resolve(props["color"]) as? String) ?? .white
+        let animated = parser.parseBool(StateRegistry.shared.resolve(props["animated"]), fallback: false)
+        let valueRaw = StateRegistry.shared.resolve(props["value"]) as? NSNumber
+        let progress = valueRaw.map { min(max($0.doubleValue, 0), 1) }
+        Group {
+            if let p = progress {
+                ProgressView(value: p)
+            } else {
+                ProgressView()
+            }
+        }
+        .progressViewStyle(.circular)
+        .tint(tint)
+        .frame(width: size, height: size)
+        .animation(animated ? .default : nil, value: progress)
+        .viewStyle(parser.parse(style))
+    }
+
+    // MARK: - Image
+
+    private var imageView: some View {
+        let parser = StyleParser()
+        let src = StateRegistry.shared.resolve(props["src"]) as? String ?? ""
+        let mode = StateRegistry.shared.resolve(props["resizeMode"]) as? String ?? "fit"
+        let loaderNode = props["loader"] as? [String: Any]
+        return CachedAsyncImage(source: AssetResolver.resolve(src), mode: mode) {
+            if let loaderNode { NodeView(node: loaderNode) }
+        }
+        .viewStyle(parser.parse(style))
+        .clipped()
+    }
+
+    // MARK: - Icon
+
+    private var iconView: some View {
+        let parser = StyleParser()
+        let name = StateRegistry.shared.resolve(props["name"]) as? String ?? ""
+        let size = parser.parseFloat(StateRegistry.shared.resolve(props["size"]), fallback: 24)
+        let color = parser.parseColor(StateRegistry.shared.resolve(props["color"]) as? String) ?? .white
+        return Image(systemName: Self.sfSymbol(name))
+            .font(.system(size: size))
+            .foregroundColor(color)
+            .viewStyle(parser.parse(style))
+    }
+
+    private static func sfSymbol(_ name: String) -> String {
+        switch name {
+        case "home": return "house.fill"
+        case "search": return "magnifyingglass"
+        case "settings": return "gearshape.fill"
+        case "heart": return "heart.fill"
+        case "star": return "star.fill"
+        case "check": return "checkmark"
+        case "close": return "xmark"
+        case "add": return "plus"
+        case "delete": return "trash.fill"
+        case "edit": return "pencil"
+        case "back": return "chevron.left"
+        case "forward": return "chevron.right"
+        case "play": return "play.fill"
+        case "info": return "info.circle.fill"
+        case "warning": return "exclamationmark.triangle.fill"
+        case "share": return "square.and.arrow.up"
+        case "menu": return "line.3.horizontal"
+        case "refresh": return "arrow.clockwise"
+        case "person": return "person.fill"
+        case "notifications": return "bell.fill"
+        default: return "questionmark"
+        }
     }
 
     private var textContent: String {

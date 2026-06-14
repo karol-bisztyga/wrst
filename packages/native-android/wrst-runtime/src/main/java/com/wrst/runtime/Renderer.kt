@@ -11,7 +11,10 @@ import org.json.JSONObject
 import androidx.compose.ui.graphics.Color
 import com.wrst.runtime.renderers.ButtonRenderer
 import com.wrst.runtime.renderers.HorizontalViewRenderer
+import com.wrst.runtime.renderers.IconRenderer
+import com.wrst.runtime.renderers.ImageRenderer
 import com.wrst.runtime.renderers.ListRenderer
+import com.wrst.runtime.renderers.ProgressRenderer
 import com.wrst.runtime.renderers.ScalingScrollViewRenderer
 import com.wrst.runtime.renderers.ScrollViewRenderer
 import com.wrst.runtime.renderers.TextRenderer
@@ -42,6 +45,15 @@ class Renderer {
             }
             "Text" -> {
                 TextRenderer.Render(obj)
+            }
+            "Icon" -> {
+                IconRenderer.Render(obj)
+            }
+            "Progress" -> {
+                ProgressRenderer.Render(obj)
+            }
+            "Image" -> {
+                ImageRenderer.Render(obj) { child -> Render(child) }
             }
             "Button" -> {
                 ButtonRenderer.Render(obj) { child -> Render(child) }

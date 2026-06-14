@@ -1,6 +1,6 @@
 import { execSync, spawn } from "node:child_process";
 import path from "node:path";
-import { existsSync, readdirSync, statSync, copyFileSync } from "node:fs";
+import { existsSync, readdirSync, statSync, copyFileSync, cpSync, rmSync } from "node:fs";
 import { loadConfig, type WrstConfig } from "../config.ts";
 import { applyConfig } from "./sync.ts";
 import { bundleOnce } from "../bundler.ts";
@@ -186,6 +186,29 @@ async function embedBundle(
   console.log(`wrst: embedded bundle → ${path.relative(cwd, dest)}`);
 }
 
+// Copy project assets into the Android app so release builds load them locally
+// (file:///android_asset/wrst-assets/<name>; see AssetResolver.kt).
+function embedAssetsAndroid(cwd: string, config: WrstConfig, androidDir: string): void {
+  const assetsDir = path.resolve(cwd, config.assets ?? "assets");
+  if (!existsSync(assetsDir)) return;
+  const dest = path.join(androidDir, "app", "src", "main", "assets", "wrst-assets");
+  rmSync(dest, { recursive: true, force: true });
+  cpSync(assetsDir, dest, { recursive: true });
+  console.log(`wrst: embedded assets → ${path.relative(cwd, dest)}`);
+}
+
+// Copy project assets (top-level files) flat into the iOS app folder so they
+// become bundle resources (loaded by Bundle.main; see CachedAsyncImage.swift).
+function embedAssetsIos(cwd: string, config: WrstConfig, appDir: string): void {
+  const assetsDir = path.resolve(cwd, config.assets ?? "assets");
+  if (!existsSync(assetsDir)) return;
+  for (const f of readdirSync(assetsDir)) {
+    const src = path.join(assetsDir, f);
+    if (statSync(src).isFile()) copyFileSync(src, path.join(appDir, f));
+  }
+  console.log(`wrst: embedded assets → ios/${path.basename(appDir)}/`);
+}
+
 export async function buildAndroid(_args: string[]): Promise<void> {
   const cwd = process.cwd();
   const config = await loadConfig(cwd);
@@ -201,6 +224,7 @@ export async function buildAndroid(_args: string[]): Promise<void> {
     config,
     path.join(androidDir, "app", "src", "main", "assets", "bundle.js"),
   );
+  embedAssetsAndroid(cwd, config, androidDir);
   console.log("wrst: building the release APK...");
   run("./gradlew assembleRelease", androidDir);
   console.log("wrst: done → android/app/build/outputs/apk/release/");
@@ -232,6 +256,7 @@ export async function buildIos(_args: string[]): Promise<void> {
     process.exit(1);
   }
   await embedBundle(cwd, config, path.join(iosDir, appFolder, "bundle.js"));
+  embedAssetsIos(cwd, config, path.join(iosDir, appFolder));
 
   const project = path.join(iosDir, projName);
   const scheme = firstScheme(project);

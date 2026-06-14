@@ -83,6 +83,41 @@ export const MenuScreen: Component = () => {
           onPress={() => navigate("moduleSensors")}
           label="Module Sensors"
         />
+        <View style={{ height: 4 }} />
+        <StyledButton
+          width={120}
+          height={36}
+          onPress={() => navigate("styling")}
+          label="Styling"
+        />
+        <View style={{ height: 4 }} />
+        <StyledButton
+          width={120}
+          height={36}
+          onPress={() => navigate("icons")}
+          label="Icons"
+        />
+        <View style={{ height: 4 }} />
+        <StyledButton
+          width={120}
+          height={36}
+          onPress={() => navigate("progress")}
+          label="Progress"
+        />
+        <View style={{ height: 4 }} />
+        <StyledButton
+          width={120}
+          height={36}
+          onPress={() => navigate("animations")}
+          label="Animations"
+        />
+        <View style={{ height: 4 }} />
+        <StyledButton
+          width={120}
+          height={36}
+          onPress={() => navigate("images")}
+          label="Images"
+        />
         <View style={{ height: 8 }} />
       </VerticalView>
     </ScrollView>

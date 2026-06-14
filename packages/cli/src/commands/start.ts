@@ -22,5 +22,6 @@ export async function start(_args: string[]): Promise<void> {
     outdir: path.resolve(cwd, "dist"),
     httpPort: config.server?.httpPort ?? 8081,
     wsPort: config.server?.wsPort ?? 8082,
+    assetsDir: path.resolve(cwd, config.assets ?? "assets"),
   });
 }

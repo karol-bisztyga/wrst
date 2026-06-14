@@ -15,6 +15,11 @@ import { DeviceInfo } from "./DeviceInfo.tsx";
 import { NativeModule } from "./NativeModule.tsx";
 import { Sensors } from "./Sensors.tsx";
 import { ModuleSensors } from "./ModuleSensors.tsx";
+import { Styling } from "./Styling.tsx";
+import { Icons } from "./Icons.tsx";
+import { ProgressScreen } from "./ProgressScreen.tsx";
+import { Animations } from "./Animations.tsx";
+import { Images } from "./Images.tsx";
 
 createAppConfig({ appBackgroundColor: "#000" });
 
@@ -36,6 +41,11 @@ createNavigation({
     nativeModule: NativeModule,
     sensors: Sensors,
     moduleSensors: ModuleSensors,
+    styling: Styling,
+    icons: Icons,
+    progress: ProgressScreen,
+    animations: Animations,
+    images: Images,
   },
   showHeader: false,
 });

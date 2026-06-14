@@ -102,6 +102,8 @@ fun WrstHost() {
         Permissions.requester = { perms, result -> permCoordinator.request(perms, result) }
         val isDebuggable =
             (context.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
+        // Local images resolve to the dev server in debug, embedded assets in release.
+        AssetResolver.debug = isDebuggable
         if (isDebuggable) {
             socketClient.setListener { msg ->
                 messageState.value = msg

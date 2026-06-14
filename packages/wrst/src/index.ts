@@ -31,6 +31,10 @@ export {
 export { createAppConfig } from "./runtime/appConfig.ts";
 export { Device } from "./runtime/device.ts";
 
+// Theme tokens (pure JS - centralize colors/spacing/typography).
+export { createTheme, defaultTheme } from "./runtime/theme.ts";
+export type { Theme } from "./runtime/theme.ts";
+
 // Native modules - call host-registered native capabilities (the extension hook).
 export {
   callNativeModule,
@@ -67,6 +71,8 @@ export type {
   Style,
   StateRef,
   MaybeState,
+  GradientType,
+  GradientDirection,
 } from "./runtime/types.ts";
 export type { AppConfig } from "./runtime/appConfig.ts";
 export type { DeviceInfo } from "./runtime/device.ts";

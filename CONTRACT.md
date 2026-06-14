@@ -60,9 +60,21 @@ Node =
 ```
 
 - `type` - component name (`"View"`, `"Text"`, `"Button"`, `"VerticalView"`,
-  `"HorizontalView"`, `"List"`, `"ScrollView"`, `"ScalingScrollView"`, ...). The host
-  switches on this and renders the platform equivalent.
+  `"HorizontalView"`, `"List"`, `"ScrollView"`, `"ScalingScrollView"`, `"Icon"`, `"Progress"`, `"Image"`, ...).
+  The host switches on this and renders the platform equivalent. (`Icon` props:
+  `name` mapped to SF Symbols / Material icons, plus `size`, `color`. `Progress`
+  props: optional `value` 0..1 for determinate, else indeterminate; `size`, `color`.
+  `Image` props: `src` is either a URL (has `://`) or a project-local asset name.
+  Local names resolve - in dev - to the dev server's `/assets/<name>` (served from
+  the project's assets folder, no rebuild) and - in release - to an embedded
+  resource (`file:///android_asset/wrst-assets/` / the iOS bundle). The native
+  async loader (Coil / NSCache-backed) fetches + caches it. Plus `resizeMode`
+  (`fit`/`cover`/`stretch`) and `loader` (a Node shown while loading); size via `style`.)
 - `props` - arbitrary; may contain **state refs** and **callback ids** (below).
+  A top-level `animate: true` (currently on `View`) tells the host to ease
+  animatable style changes (size/backgroundColor/opacity/offset/borderRadius)
+  instead of snapping - native-driven (Compose `animate*AsState` / SwiftUI
+  `.animation`), no JS frame loop.
 - `children` - array of `Node`.
 
 ### State refs (reactive values)
@@ -88,6 +100,12 @@ event, the host calls `call(id)`; the handler runs in JS (and typically issues
 Some values are pre-serialized to strings before crossing the bridge and both
 hosts must parse them identically: colors (`#RGB`/`#RRGGBB`/`rgb()`/`rgba()` →
 `"R,G,B,A"`), padding shorthand → `"T,R,B,L"`. (See each host's `parsers/`.)
+
+A few style props cross as nested objects (both hosts parse them identically):
+
+- `gradient`: `{ type?: "linear"|"radial", colors: string[], direction?: "vertical"|"horizontal"|"diagonal" }`
+  - needs 2+ colors; takes precedence over `backgroundColor`; `direction` is linear-only.
+- `shadow`: `{ color?: string, radius?: number, x?: number, y?: number }` - a drop shadow.
 
 ## Reactivity protocol
 

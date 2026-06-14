@@ -19,9 +19,10 @@ struct ViewStyleModifier: ViewModifier {
                    alignment: alignment)
             .background(
                 RoundedRectangle(cornerRadius: style.borderRadius)
-                    .fill(style.backgroundColor ?? .clear)
+                    .fill(style.backgroundFill)
             )
             .modifier(ClipIfNeeded(radius: style.borderRadius))
+            .modifier(ShadowIfNeeded(shadow: style.shadow))
             .overlay(
                 RoundedRectangle(cornerRadius: style.borderRadius)
                     .strokeBorder(style.borderColor ?? .clear, lineWidth: style.borderWidth)
@@ -38,6 +39,19 @@ private struct ClipIfNeeded: ViewModifier {
     func body(content: Content) -> some View {
         if radius > 0 {
             content.clipShape(RoundedRectangle(cornerRadius: radius))
+        } else {
+            content
+        }
+    }
+}
+
+private struct ShadowIfNeeded: ViewModifier {
+    let shadow: ShadowSpec?
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if let s = shadow {
+            content.shadow(color: s.color, radius: s.radius, x: s.x, y: s.y)
         } else {
             content
         }

@@ -43,9 +43,15 @@ declare global {
 
 export type Alignment = "start" | "center" | "end" | (string & {});
 
+export type GradientType = "linear" | "radial";
+export type GradientDirection = "vertical" | "horizontal" | "diagonal";
+
 // styles
 export type Style = {
   hidden?: MaybeState<boolean>;
+  // Ease style changes (size / backgroundColor / opacity / offset / borderRadius)
+  // instead of snapping. Native-driven (no JS frame loop). Honored by View.
+  animate?: MaybeState<boolean>;
   style?: {
     color?: MaybeState<string>;
     backgroundColor?: MaybeState<string>;
@@ -59,6 +65,20 @@ export type Style = {
     // size sets both width and height
     size?: MaybeState<number | "fill" | (string & {})>;
     opacity?: MaybeState<number>;
+    // A color gradient fill (takes precedence over backgroundColor). `colors`
+    // needs 2+ entries; `direction` applies to linear only.
+    gradient?: {
+      type?: GradientType;
+      colors: string[];
+      direction?: GradientDirection;
+    };
+    // A drop shadow behind the element.
+    shadow?: {
+      color?: string;
+      radius?: number;
+      x?: number;
+      y?: number;
+    };
     x?: MaybeState<number>;
     y?: MaybeState<number>;
   };
