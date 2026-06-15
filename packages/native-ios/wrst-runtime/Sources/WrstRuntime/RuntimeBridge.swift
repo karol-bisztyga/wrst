@@ -13,6 +13,8 @@ final class RuntimeBridge {
     var onRenderItem: ((_ renderItemId: String, _ itemJSON: String, _ index: Int) -> String?)?
     // JS navigate() fired - push the new current screen.
     var onNavigate: (() -> Void)?
+    // JS goBack() fired - pop the current screen.
+    var onGoBack: (() -> Void)?
     // Invoke call(id, <jsonLiteral>) - used by fetch resolve/reject.
     var onCallJSON: ((_ id: String, _ argJSON: String) -> Void)?
 
@@ -30,5 +32,9 @@ final class RuntimeBridge {
 
     func navigate() {
         onNavigate?()
+    }
+
+    func goBack() {
+        onGoBack?()
     }
 }

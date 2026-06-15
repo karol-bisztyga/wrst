@@ -145,6 +145,35 @@ fun WrstHost() {
     // real previous screen as background during the animation.
     val treeMap: SnapshotStateMap<String, String> = remember { mutableStateMapOf() }
 
+    // `expectedDepth` is the "screen" back-stack depth resulting from OUR ops
+    // (forward navigate + the load-time rebuild), kept in sync synchronously as
+    // we issue them. When the observed depth drops below it, the user (or a
+    // goBack()) popped, so we sync the JS stack down. We observe via the
+    // currentBackStack StateFlow (not OnDestinationChangedListener, whose
+    // currentBackStack.value is stale mid-pop). StateFlow is conflated, so the
+    // rebuild's intermediate pop/navigate emissions collapse to the final depth.
+    val expectedDepth = remember { intArrayOf(0) }
+
+    fun screenDepth() = navController.currentBackStack.value.count { it.destination.route == "screen" }
+
+    LaunchedEffect(navController) {
+        navController.currentBackStack.collect { stack ->
+            val depth = stack.count { it.destination.route == "screen" }
+            if (depth < expectedDepth[0]) {
+                // User swipe/system back or a goBack() pop: pop JS to match.
+                repeat(expectedDepth[0] - depth) { JsRuntimeManager.back() }
+            }
+            expectedDepth[0] = depth
+        }
+    }
+
+    // JS goBack() → pop the back stack; the collector above syncs JS.
+    LaunchedEffect(Unit) {
+        for (event in JsRuntimeManager.goBackChannel) {
+            navController.popBackStack()
+        }
+    }
+
     // Load on every pull (keyed on the counter, not the bundle string) so a
     // reload re-runs even when the bundle is unchanged.
     LaunchedEffect(loadCounter.value) {
@@ -152,9 +181,27 @@ fun WrstHost() {
         if (message.isNotEmpty()) {
             JsRuntimeManager.load(message)
             if (!ErrorHandler.isError()) {
-                val tree = JsRuntimeManager.render()
-                val entryId = navController.currentBackStackEntry?.id
-                if (tree != null && entryId != null) treeMap[entryId] = tree
+                // Rebuild the back stack from JS: one entry per stack level
+                // (just the root for a fresh start, or the whole restored path
+                // when persistCurrentScreen kept one). Reset to the start
+                // destination first so a reload doesn't leave stale entries.
+                val trees = JsRuntimeManager.navRestore()
+                // Reshape the stack to match the restored path. This whole block
+                // is synchronous (no suspension), so StateFlow conflation hides
+                // the intermediate depths from the collector; we set
+                // expectedDepth to the final depth before it observes anything.
+                while (navController.previousBackStackEntry != null) {
+                    navController.popBackStack()
+                }
+                treeMap.clear()
+                trees.firstOrNull()?.let { root ->
+                    navController.currentBackStackEntry?.id?.let { treeMap[it] = root }
+                }
+                for (i in 1 until trees.size) {
+                    navController.navigate("screen")
+                    navController.currentBackStackEntry?.id?.let { treeMap[it] = trees[i] }
+                }
+                expectedDepth[0] = screenDepth()
             }
         }
     }
@@ -163,6 +210,7 @@ fun WrstHost() {
     LaunchedEffect(Unit) {
         for (event in JsRuntimeManager.navigateChannel) {
             navController.navigate("screen")
+            expectedDepth[0] = screenDepth()  // our push, not a user back
             val entryId = navController.currentBackStackEntry?.id
             val tree = JsRuntimeManager.render()
             if (tree != null && entryId != null) treeMap[entryId] = tree

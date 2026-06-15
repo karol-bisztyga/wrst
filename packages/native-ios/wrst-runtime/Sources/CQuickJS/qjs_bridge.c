@@ -19,6 +19,7 @@ extern void swift_native_clear_timeout(const char *id);
 extern void swift_native_set_interval(const char *id, double delay);
 extern void swift_native_clear_interval(const char *id);
 extern void swift_native_navigate(void);
+extern void swift_native_go_back(void);
 extern char *swift_native_storage_get(const char *key); // malloc'd or NULL; we free
 extern void swift_native_storage_set(const char *key, const char *value);
 extern void swift_native_storage_remove(const char *key);
@@ -251,6 +252,11 @@ static JSValue n_navigate(JSContext *ctx, JSValueConst this_val, int argc, JSVal
     return JS_UNDEFINED;
 }
 
+static JSValue n_go_back(JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) {
+    swift_native_go_back();
+    return JS_UNDEFINED;
+}
+
 // Extension hook: native.nativeModuleCall(name, argsJson) -> jsonString | null.
 // Forwards to the Swift module registry and returns the module's JSON-encoded
 // result *as a string* (the JS side runs JSON.parse on it - mirrors Android).
@@ -339,6 +345,7 @@ static void install_native(JSContext *ctx) {
     JS_SetPropertyStr(ctx, native, "nativeSetInterval", JS_NewCFunction(ctx, n_set_interval, "nativeSetInterval", 2));
     JS_SetPropertyStr(ctx, native, "nativeClearInterval", JS_NewCFunction(ctx, n_clear_interval, "nativeClearInterval", 1));
     JS_SetPropertyStr(ctx, native, "nativeNavigate", JS_NewCFunction(ctx, n_navigate, "nativeNavigate", 0));
+    JS_SetPropertyStr(ctx, native, "nativeGoBack", JS_NewCFunction(ctx, n_go_back, "nativeGoBack", 0));
     JS_SetPropertyStr(ctx, native, "nativeModuleCall", JS_NewCFunction(ctx, n_module_call, "nativeModuleCall", 2));
     JS_SetPropertyStr(ctx, native, "nativeSensorStart", JS_NewCFunction(ctx, n_sensor_start, "nativeSensorStart", 3));
     JS_SetPropertyStr(ctx, native, "nativeSensorStop", JS_NewCFunction(ctx, n_sensor_stop, "nativeSensorStop", 1));

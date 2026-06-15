@@ -104,6 +104,11 @@ public nonisolated func swift_native_navigate() {
     MainActor.assumeIsolated { RuntimeBridge.shared.navigate() }
 }
 
+@_cdecl("swift_native_go_back")
+public nonisolated func swift_native_go_back() {
+    MainActor.assumeIsolated { RuntimeBridge.shared.goBack() }
+}
+
 // localStorage - UserDefaults is thread-safe, so no MainActor hop needed.
 
 // Returns a malloc'd C string the caller (C) frees, or nil.

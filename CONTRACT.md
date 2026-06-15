@@ -26,8 +26,13 @@ event ──► call(handlerId) ──► handler runs ──► setState(id, va
 The bundle installs a global on load:
 
 ```js
-globalThis.__WRST_PROTOCOL__ = <integer>   // currently 4
+globalThis.__WRST_PROTOCOL__ = <integer>   // currently 6
 ```
+
+Before evaluating the bundle, the host installs `globalThis.__WRST_DEBUG__`
+(`boolean`) - `true` for a debug build (Android: app `FLAG_DEBUGGABLE`; iOS:
+`#if DEBUG`), `false` otherwise. The framework reads it at `createNavigation`
+time to force `persistCurrentScreen` on in debug.
 
 Each native host hard-codes the version it implements. **After evaluating the
 bundle**, the host reads `__WRST_PROTOCOL__` and compares:
@@ -43,10 +48,12 @@ surface, the entry points, or the reactivity protocol below.
 
 The host calls these globals (installed by `start()` / framework bootstrap):
 
-| Global   | Signature                                      | Purpose                                                                                                                                       |
-| -------- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `render` | `() => Node`                                   | Returns the current UI tree. Host does `JSON.stringify(render())`. Call it for the initial render and to obtain structural updates.           |
-| `call`   | `(id: string, ...args) => string \| undefined` | Invokes a registered callback by id (button press, timer fire, fetch resolve/reject). Return value is `JSON.stringify`'d (often `undefined`). |
+| Global             | Signature                                      | Purpose                                                                                                                                                                                                                                                                                                                                                                                                              |
+| ------------------ | ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `render`           | `() => Node`                                   | Returns the current UI tree. Host does `JSON.stringify(render())`. Call it for the initial render and to obtain structural updates.                                                                                                                                                                                                                                                                                  |
+| `call`             | `(id: string, ...args) => string \| undefined` | Invokes a registered callback by id (button press, timer fire, fetch resolve/reject). Return value is `JSON.stringify`'d (often `undefined`).                                                                                                                                                                                                                                                                        |
+| `__wrstNavRestore` | `() => string` _(added in protocol v5)_        | Called **once at load** instead of `render()` for the first paint. Renders every level of the navigation stack bottom-first and returns a JSON array of per-level tree-JSON strings (`["{...}", ...]`), leaving the current route at the top. The host uses `[0]` as the root screen and the rest as the pushed back-stack - `[root]` for a fresh start, or the whole path when `persistCurrentScreen` restored one. |
+| `__wrstBack`       | `() => string` _(added in protocol v6)_        | Called by the host **after it pops a screen** (user swipe / system back, or in response to `native.nativeGoBack`). Pops the JS navigation stack to match, re-persists it, and returns the new top route. No-op at the root. Single source of truth: the host pops its view, then calls this - JS never pops on its own.                                                                                              |
 
 ## UI tree schema (JSON)
 
@@ -178,11 +185,12 @@ statusText: string, rawBody: string, jsonBody?: any }`.
 
 ### Navigation / config
 
-| Function              | Signature                              | Notes                                                                             |
-| --------------------- | -------------------------------------- | --------------------------------------------------------------------------------- |
-| `nativeNavigate`      | `() => void`                           | Push a nav frame + re-render (the active route comes from the tree).              |
-| `nativeSetShowHeader` | `(show: boolean) => void` _(optional)_ | Apple Watch only; Wear OS may omit / no-op.                                       |
-| `nativeSetAppConfig`  | `(backgroundColor: string) => void`    | Apply app config. Invalid colors throw on the native side (surfaced as an error). |
+| Function              | Signature                                       | Notes                                                                                                                                                                       |
+| --------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `nativeNavigate`      | `() => void`                                    | Push a nav frame + re-render (the active route comes from the tree).                                                                                                        |
+| `nativeGoBack`        | `() => void` _(optional, added in protocol v6)_ | Pop one nav frame. The host pops its view stack and then calls `__wrstBack` to sync JS. Backs the public `goBack()`; the same view-pop path a user swipe/system back takes. |
+| `nativeSetShowHeader` | `(show: boolean) => void` _(optional)_          | Apple Watch only; Wear OS may omit / no-op.                                                                                                                                 |
+| `nativeSetAppConfig`  | `(backgroundColor: string) => void`             | Apply app config. Invalid colors throw on the native side (surfaced as an error).                                                                                           |
 
 > Functions are called via optional chaining (`native?.x`), so a host that hasn't
 > implemented an **optional** one (e.g. `nativeSetShowHeader`) degrades gracefully.

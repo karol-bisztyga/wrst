@@ -40,6 +40,11 @@ public struct WrstRootView: View {
             }
         }
         .onAppear { controller.start() }
+        // A user back (swipe in CustomNavHost, or system back in the
+        // NavigationStack) shrinks navPath; sync it down to the JS stack.
+        .onChange(of: controller.navPath.count) { _, newCount in
+            controller.onNavChange(newCount)
+        }
     }
 
     private func styledScreen(_ json: String) -> some View {

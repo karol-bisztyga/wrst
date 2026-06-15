@@ -9,7 +9,7 @@ import CQuickJS
 final class JSRuntime {
     // The JS↔native wire-contract version this host implements (see CONTRACT.md).
     // Must match the bundle's globalThis.__WRST_PROTOCOL__.
-    static let protocolVersion = 4
+    static let protocolVersion = 6
 
     private var bridge: OpaquePointer?
     private var onError: (String) -> Void = { _ in }
@@ -27,6 +27,16 @@ final class JSRuntime {
         AppConfig.shared.reset()
 
         bridge = qjs_bridge_create()
+
+        // Tell the bundle whether this is a debug build (before it evaluates, so
+        // createNavigation() can default persistCurrentScreen on). Android reads
+        // FLAG_DEBUGGABLE; iOS uses the compile-time #if DEBUG.
+        #if DEBUG
+        _ = qjs_bridge_eval(bridge, "globalThis.__WRST_DEBUG__ = true;", nil)
+        #else
+        _ = qjs_bridge_eval(bridge, "globalThis.__WRST_DEBUG__ = false;", nil)
+        #endif
+
         var err: UnsafeMutablePointer<CChar>?
         let rc = qjs_bridge_eval(bridge, code, &err)
         if rc != 0 {
@@ -54,6 +64,27 @@ final class JSRuntime {
         guard let cstr = qjs_bridge_eval_string(bridge, "JSON.stringify(render())") else { return nil }
         defer { free(cstr) }
         return String(cString: cstr)
+    }
+
+    // Rebuild the navigation stack at load time (see CONTRACT.md). Returns one
+    // rendered tree per stack level, bottom-first; [root] for a fresh start, or
+    // the whole restored path when persistCurrentScreen kept one. Leaves the JS
+    // currentRoute at the top.
+    func navRestore() -> [String] {
+        guard let bridge else { return [] }
+        guard let cstr = qjs_bridge_eval_string(bridge, "__wrstNavRestore()") else { return [] }
+        defer { free(cstr) }
+        let json = String(cString: cstr)
+        guard let data = json.data(using: .utf8),
+              let trees = try? JSONSerialization.jsonObject(with: data) as? [String] else { return [] }
+        return trees
+    }
+
+    // Sync the JS navigation stack back down after the host popped a screen
+    // (swipe/system back or goBack()). See CONTRACT.md / __wrstBack.
+    func back() {
+        guard let bridge else { return }
+        _ = qjs_bridge_eval(bridge, "__wrstBack()", nil)
     }
 
     func call(_ id: String) {

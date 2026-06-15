@@ -17,6 +17,7 @@ export { useEffect } from "./runtime/hooks/useEffect.ts";
 export {
   createNavigation,
   navigate,
+  goBack,
   useNavigation,
 } from "./runtime/navigation.ts";
 

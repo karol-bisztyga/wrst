@@ -6,6 +6,6 @@
 // Installed on the global at module-eval time, so it's present as soon as the
 // host evaluates the bundle (before render()). Each host reads __WRST_PROTOCOL__
 // after loading and refuses to render on a mismatch.
-export const PROTOCOL_VERSION = 4;
+export const PROTOCOL_VERSION = 6;
 
 (globalThis as any).__WRST_PROTOCOL__ = PROTOCOL_VERSION;

@@ -29,10 +29,11 @@ object JsRuntimeManager {
     private val timerJobs = ConcurrentHashMap<String, Job>()
     val rerenderChannel = Channel<Unit>(Channel.CONFLATED)
     val navigateChannel = Channel<Unit>(Channel.UNLIMITED)
+    val goBackChannel = Channel<Unit>(Channel.UNLIMITED)
 
     // The JS↔native wire-contract version this host implements (see CONTRACT.md).
     // Must match the bundle's globalThis.__WRST_PROTOCOL__.
-    private const val WRST_PROTOCOL_VERSION = 4
+    private const val WRST_PROTOCOL_VERSION = 6
 
     // Decode the JSON args array JS passes to a native module into a List.
     private fun decodeModuleArgs(json: String): List<Any?> {
@@ -190,6 +191,10 @@ object JsRuntimeManager {
                     navigateChannel.trySend(Unit)
                     Unit
                 }
+                function("nativeGoBack") { _: Array<Any?> ->
+                    goBackChannel.trySend(Unit)
+                    Unit
+                }
                 // Extension hook: dispatch to a host-registered native module.
                 // args = [name, argsJson]; returns the module's JSON-encoded
                 // result (or null if there's no such module / no result).
@@ -300,12 +305,17 @@ object JsRuntimeManager {
         timerJobs.clear()
         rerenderChannel.tryReceive()
         while (navigateChannel.tryReceive().isSuccess) {}
+        while (goBackChannel.tryReceive().isSuccess) {}
         StateRegistry.clear()
         AppConfig.reset()
         ErrorHandler.set(null)
         mutex.withLock {
             createRuntime()
             try {
+                // Tell the bundle whether this is a debug build (before it
+                // evaluates, so createNavigation() can default
+                // persistCurrentScreen on). iOS uses #if DEBUG.
+                quickJs!!.evaluate<Any?>("globalThis.__WRST_DEBUG__ = ${AssetResolver.debug};")
                 quickJs!!.evaluate<Unit>(code)
                 Log.d("JsRuntimeManager", "code evaluated")
                 val bundleProtocol =
@@ -332,6 +342,39 @@ object JsRuntimeManager {
                 Log.e("JsRuntimeManager", "render error", e)
                 ErrorHandler.set(e.message ?: "Unknown render error")
                 null
+            }
+        }
+    }
+
+    // Rebuild the navigation stack at load time (see CONTRACT.md): one rendered
+    // tree per stack level, bottom-first. [root] for a fresh start, or the whole
+    // restored path when persistCurrentScreen kept one. Leaves the JS
+    // currentRoute at the top. iOS twin: JSRuntime.navRestore().
+    suspend fun navRestore(): List<String> {
+        ensureReady()
+        return mutex.withLock {
+            try {
+                val json = quickJs!!.evaluate<String>("__wrstNavRestore()")
+                val arr = org.json.JSONArray(json)
+                (0 until arr.length()).map { arr.getString(it) }
+            } catch (e: Exception) {
+                Log.e("JsRuntimeManager", "navRestore error", e)
+                ErrorHandler.set(e.message ?: "Unknown navRestore error")
+                emptyList()
+            }
+        }
+    }
+
+    // Sync the JS navigation stack back down after the host popped a screen
+    // (swipe/system back or goBack()). See CONTRACT.md / __wrstBack.
+    suspend fun back() {
+        ensureReady()
+        mutex.withLock {
+            try {
+                quickJs!!.evaluate<Any?>("__wrstBack()")
+            } catch (e: Exception) {
+                Log.e("JsRuntimeManager", "back error", e)
+                ErrorHandler.set(e.message ?: "Unknown error in back")
             }
         }
     }

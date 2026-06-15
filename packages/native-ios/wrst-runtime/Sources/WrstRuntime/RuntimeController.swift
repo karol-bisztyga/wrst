@@ -17,6 +17,10 @@ final class RuntimeController: ObservableObject {
     @Published var navPath: [ScreenEntry] = []
 
     private var navCounter = 0
+    // The navPath.count we last set programmatically (load/navigate). A drop
+    // below it means the user backed out (swipe/system back), which we sync to
+    // JS; equal-or-greater is our own change and is ignored. See onNavChange.
+    var syncedNavCount = 0
     private let runtime = JSRuntime()
     private let socket = SocketClient()
 
@@ -41,6 +45,21 @@ final class RuntimeController: ObservableObject {
             // to avoid re-entrant eval, then render the new screen and push it.
             Task { @MainActor in self?.handleNavigate() }
         }
+        RuntimeBridge.shared.onGoBack = { [weak self] in
+            // goBack() popped the JS stack request; pop our view stack to match.
+            // The resulting navPath change syncs JS via onNavChange → back().
+            Task { @MainActor in
+                guard let self, !self.navPath.isEmpty else { return }
+                self.navPath.removeLast()
+            }
+        }
+    }
+
+    // Called when navPath shrinks: a user back (swipe/system) we didn't initiate
+    // programmatically. Sync the JS stack down and re-persist.
+    func onNavChange(_ newCount: Int) {
+        if newCount < syncedNavCount { runtime.back() }
+        syncedNavCount = newCount
     }
 
     func start() {
@@ -72,9 +91,17 @@ final class RuntimeController: ObservableObject {
         error = nil
         runtime.load(code)          // may set error via the exception handler
         guard error == nil else { return }
-        navPath = []
+        // Rebuild the stack from JS: trees[0] is the root, the rest are pushed
+        // screens (a restored path when persistCurrentScreen kept one; otherwise
+        // just the root).
+        let trees = runtime.navRestore()
         navCounter = 0
-        rootTree = runtime.render()
+        rootTree = trees.first
+        navPath = trees.dropFirst().map { json in
+            navCounter += 1
+            return ScreenEntry(id: navCounter, treeJSON: json)
+        }
+        syncedNavCount = navPath.count
     }
 
     // JS already updated currentRoute; render the new current screen and push it.
@@ -82,5 +109,6 @@ final class RuntimeController: ObservableObject {
         guard let tree = runtime.render() else { return }
         navCounter += 1
         navPath.append(ScreenEntry(id: navCounter, treeJSON: tree))
+        syncedNavCount = navPath.count
     }
 }
