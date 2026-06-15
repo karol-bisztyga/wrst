@@ -26,7 +26,7 @@ event ──► call(handlerId) ──► handler runs ──► setState(id, va
 The bundle installs a global on load:
 
 ```js
-globalThis.__WRST_PROTOCOL__ = <integer>   // currently 6
+globalThis.__WRST_PROTOCOL__ = <integer>   // currently 10
 ```
 
 Before evaluating the bundle, the host installs `globalThis.__WRST_DEBUG__`
@@ -67,7 +67,9 @@ Node =
 ```
 
 - `type` - component name (`"View"`, `"Text"`, `"Button"`, `"VerticalView"`,
-  `"HorizontalView"`, `"List"`, `"ScrollView"`, `"ScalingScrollView"`, `"Icon"`, `"Progress"`, `"Image"`, ...).
+  `"HorizontalView"`, `"List"`, `"ScrollView"`, `"ScalingScrollView"`, `"Icon"`, `"Progress"`, `"Image"`,
+  and the input controls `"Toggle"`, `"Slider"`, `"Stepper"`, `"Picker"`,
+  `"RadioGroup"`, `"Crown"`, `"TextInput"`, `"Touchable"`, ...).
   The host switches on this and renders the platform equivalent. (`Icon` props:
   `name` mapped to SF Symbols / Material icons, plus `size`, `color`. `Progress`
   props: optional `value` 0..1 for determinate, else indeterminate; `size`, `color`.
@@ -77,6 +79,23 @@ Node =
   resource (`file:///android_asset/wrst-assets/` / the iOS bundle). The native
   async loader (Coil / NSCache-backed) fetches + caches it. Plus `resizeMode`
   (`fit`/`cover`/`stretch`) and `loader` (a Node shown while loading); size via `style`.)
+  Input controls _(added in protocol v7)_ carry an `onChange` **callback id** the
+  host invokes with the new value: `Toggle` (`value: bool`, `label?`, → `bool`),
+  `Slider` (`value`,`min`,`max`,`step` numbers, → number), `Stepper` (same as
+  Slider plus `label?`, → number), `Picker` (`options: string[]`,
+  `selectedIndex: number`, → selected index). Native maps these to SwiftUI
+  `Toggle`/`Slider`/`Stepper`/wheel `Picker` and Wear `ToggleChip`/`InlineSlider`/
+  `Stepper`/`Picker`. _(protocol v8)_ `RadioGroup` (same props as `Picker`, → index)
+  is a vertical single-select list; `Crown` (`value`/`min`/`max`/`step`, → number)
+  binds raw Digital-Crown / rotary input and renders its children; `Button` gains
+  an optional `onLongPress` callback id (long-press / combined-click).
+  _(protocol v9)_ `TextInput` (`value: string`, `placeholder?`, → string) opens the
+  platform system text-entry UI on tap (watchOS `TextField`; Wear `RemoteInput`
+  activity) - keyboard/handwriting/voice included - and reports the committed text.
+  _(protocol v10)_ `Touchable` (optional `onPress`/`onLongPress` callback ids,
+  `activeOpacity?`, renders children) is a general press wrapper: tap + long-press
+  over arbitrary content with a press-dim (SwiftUI gesture+opacity; Wear
+  `combinedClickable` + isPressed alpha).
 - `props` - arbitrary; may contain **state refs** and **callback ids** (below).
   A top-level `animate: true` (currently on `View`) tells the host to ease
   animatable style changes (size/backgroundColor/opacity/offset/borderRadius)

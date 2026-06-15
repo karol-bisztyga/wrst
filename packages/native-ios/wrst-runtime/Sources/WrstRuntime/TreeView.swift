@@ -55,6 +55,14 @@ struct NodeView: View, Equatable {
         case "Icon": iconView
         case "Image": imageView
         case "Progress": progressView
+        case "Toggle": toggleView
+        case "Slider": sliderView
+        case "Stepper": stepperView
+        case "Picker": pickerView
+        case "RadioGroup": radioGroupView
+        case "Crown": crownView
+        case "TextInput": textInputView
+        case "Touchable": touchableView
         case "View": boxContainer
         case "VerticalView": columnContainer
         case "HorizontalView": rowContainer
@@ -145,15 +153,34 @@ struct NodeView: View, Equatable {
         .viewStyle(StyleParser().parse(style))
     }
 
+    @ViewBuilder
     private var buttonView: some View {
         let a = ContainerStyleParser().parse(style)
-        return Button(action: {
-            if let id = props["onPress"] as? String { RuntimeBridge.shared.call(id) }
-        }) {
+        let pressId = props["onPress"] as? String
+        let longPressId = props["onLongPress"] as? String
+        if let longPressId {
+            // tap XOR long-press: an exclusive gesture (long-press preferred, tap
+            // only if the press was short). A plain Button can't do this - it
+            // fires its tap on release even after a long press.
             ZStack(alignment: a.box) { childViews }
+                .contentShape(Rectangle())
+                .viewStyle(StyleParser().parse(style), alignment: a.box)
+                .gesture(
+                    LongPressGesture(minimumDuration: 0.5)
+                        .onEnded { _ in RuntimeBridge.shared.call(longPressId) }
+                        .exclusively(before: TapGesture().onEnded {
+                            if let pressId { RuntimeBridge.shared.call(pressId) }
+                        })
+                )
+        } else {
+            Button(action: {
+                if let pressId { RuntimeBridge.shared.call(pressId) }
+            }) {
+                ZStack(alignment: a.box) { childViews }
+            }
+            .buttonStyle(.plain)
+            .viewStyle(StyleParser().parse(style), alignment: a.box)
         }
-        .buttonStyle(.plain)
-        .viewStyle(StyleParser().parse(style), alignment: a.box)
     }
 
     @ViewBuilder
@@ -215,6 +242,156 @@ struct NodeView: View, Equatable {
         .frame(width: size, height: size)
         .animation(animated ? .default : nil, value: progress)
         .viewStyle(parser.parse(style))
+    }
+
+    // MARK: - Inputs
+
+    // The control's value lives in JS state; the binding's setter pushes the new
+    // value back via call(onChange, value) and JS re-renders. Android twins:
+    // ToggleRenderer / SliderRenderer / StepperRenderer / PickerRenderer.
+
+    private func callback(_ key: String) -> String? { props[key] as? String }
+
+    private var toggleView: some View {
+        let id = callback("onChange")
+        let value = StateRegistry.shared.resolve(props["value"]) as? Bool ?? false
+        let label = StateRegistry.shared.resolve(props["label"]) as? String ?? ""
+        let binding = Binding(get: { value }, set: { v in
+            if let id { RuntimeBridge.shared.callJSON(id, v ? "true" : "false") }
+        })
+        return Toggle(label, isOn: binding)
+            .viewStyle(StyleParser().parse(style))
+    }
+
+    private var sliderView: some View {
+        let parser = StyleParser()
+        let id = callback("onChange")
+        let value = parser.parseFloat(StateRegistry.shared.resolve(props["value"]), fallback: 0)
+        let minV = parser.parseFloat(StateRegistry.shared.resolve(props["min"]), fallback: 0)
+        var maxV = parser.parseFloat(StateRegistry.shared.resolve(props["max"]), fallback: 1)
+        if maxV <= minV { maxV = minV + 1 }
+        var step = parser.parseFloat(StateRegistry.shared.resolve(props["step"]), fallback: 0.1)
+        if step <= 0 { step = 0.1 }
+        let binding = Binding(get: { min(max(value, minV), maxV) }, set: { v in
+            if let id { RuntimeBridge.shared.callJSON(id, String(Double(v))) }
+        })
+        return Slider(value: binding, in: minV...maxV, step: step)
+            .viewStyle(parser.parse(style))
+    }
+
+    private var stepperView: some View {
+        let parser = StyleParser()
+        let id = callback("onChange")
+        let value = parser.parseFloat(StateRegistry.shared.resolve(props["value"]), fallback: 0)
+        let minV = parser.parseFloat(StateRegistry.shared.resolve(props["min"]), fallback: 0)
+        var maxV = parser.parseFloat(StateRegistry.shared.resolve(props["max"]), fallback: 10)
+        if maxV <= minV { maxV = minV + 1 }
+        var step = parser.parseFloat(StateRegistry.shared.resolve(props["step"]), fallback: 1)
+        if step <= 0 { step = 1 }
+        let label = StateRegistry.shared.resolve(props["label"]) as? String
+        let binding = Binding(get: { min(max(value, minV), maxV) }, set: { v in
+            if let id { RuntimeBridge.shared.callJSON(id, String(Double(v))) }
+        })
+        return Stepper(value: binding, in: minV...maxV, step: step) {
+            Text(label ?? Self.formatNumber(value))
+        }
+        .viewStyle(parser.parse(style))
+    }
+
+    private var pickerView: some View {
+        let id = callback("onChange")
+        let options = (StateRegistry.shared.resolve(props["options"]) as? [Any])?
+            .compactMap { $0 as? String } ?? []
+        let raw = Int(StyleParser().parseFloat(StateRegistry.shared.resolve(props["selectedIndex"]), fallback: 0))
+        let selected = options.isEmpty ? 0 : min(max(raw, 0), options.count - 1)
+        let binding = Binding(get: { selected }, set: { idx in
+            if let id { RuntimeBridge.shared.callJSON(id, String(idx)) }
+        })
+        return Picker("", selection: binding) {
+            ForEach(options.indices, id: \.self) { i in
+                Text(options[i]).tag(i)
+            }
+        }
+        .viewStyle(StyleParser().parse(style))
+    }
+
+    // Trim a trailing ".0" so an integer-valued stepper reads "3", not "3.0".
+    private static func formatNumber(_ v: CGFloat) -> String {
+        v == v.rounded() ? String(Int(v)) : String(Double(v))
+    }
+
+    // A JS string-literal for callJSON (properly escaped quotes/backslashes/etc).
+    private static func jsLiteral(_ s: String) -> String {
+        guard let data = try? JSONSerialization.data(withJSONObject: [s]),
+              let arr = String(data: data, encoding: .utf8) else { return "\"\"" }
+        return String(arr.dropFirst().dropLast()) // strip the wrapping [ ]
+    }
+
+    private var touchableView: some View {
+        let a = ContainerStyleParser().parse(style)
+        let parser = StyleParser()
+        let activeOpacity = Double(parser.parseFloat(
+            StateRegistry.shared.resolve(props["activeOpacity"]), fallback: 0.6))
+        return TouchableView(
+            onPress: props["onPress"] as? String,
+            onLongPress: props["onLongPress"] as? String,
+            activeOpacity: activeOpacity
+        ) {
+            ZStack(alignment: a.box) { childViews }
+        }
+        .viewStyle(parser.parse(style), alignment: a.box)
+    }
+
+    private var textInputView: some View {
+        let id = callback("onChange")
+        let value = StateRegistry.shared.resolve(props["value"]) as? String ?? ""
+        let placeholder = StateRegistry.shared.resolve(props["placeholder"]) as? String ?? ""
+        return WrstTextField(placeholder: placeholder, value: value) { t in
+            if let id { RuntimeBridge.shared.callJSON(id, Self.jsLiteral(t)) }
+        }
+        .viewStyle(StyleParser().parse(style))
+    }
+
+    private var radioGroupView: some View {
+        let id = callback("onChange")
+        let options = (StateRegistry.shared.resolve(props["options"]) as? [Any])?
+            .compactMap { $0 as? String } ?? []
+        let raw = Int(StyleParser().parseFloat(StateRegistry.shared.resolve(props["selectedIndex"]), fallback: 0))
+        let selected = options.isEmpty ? 0 : min(max(raw, 0), options.count - 1)
+        return VStack(spacing: 4) {
+            ForEach(options.indices, id: \.self) { i in
+                Button(action: { if let id { RuntimeBridge.shared.callJSON(id, String(i)) } }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: i == selected ? "largecircle.fill.circle" : "circle")
+                        Text(options[i])
+                        Spacer()
+                    }
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .viewStyle(StyleParser().parse(style))
+    }
+
+    private var crownView: some View {
+        let parser = StyleParser()
+        let a = ContainerStyleParser().parse(style)
+        let id = callback("onChange")
+        let value = Double(parser.parseFloat(StateRegistry.shared.resolve(props["value"]), fallback: 0))
+        let minV = Double(parser.parseFloat(StateRegistry.shared.resolve(props["min"]), fallback: 0))
+        var maxV = Double(parser.parseFloat(StateRegistry.shared.resolve(props["max"]), fallback: 100))
+        if maxV <= minV { maxV = minV + 1 }
+        var step = Double(parser.parseFloat(StateRegistry.shared.resolve(props["step"]), fallback: 1))
+        if step <= 0 { step = 1 }
+        let binding = Binding(get: { min(max(value, minV), maxV) }, set: { v in
+            if let id { RuntimeBridge.shared.callJSON(id, String(v)) }
+        })
+        return ZStack(alignment: a.box) { childViews }
+            .viewStyle(parser.parse(style), alignment: a.box)
+            .focusable(true)
+            .digitalCrownRotation(binding, from: minV, through: maxV, by: step,
+                                  sensitivity: .medium, isContinuous: false,
+                                  isHapticFeedbackEnabled: true)
     }
 
     // MARK: - Image
@@ -304,5 +481,73 @@ struct ListNodeView: View {
         ForEach(Array(rendered.enumerated()), id: \.offset) { pair in
             TreeView(json: pair.element)
         }
+    }
+}
+
+// watchOS TextField needs real @State storage: the system text-input commit
+// writes through the projected $text binding, which a closure-only Binding
+// doesn't reliably receive. We mirror the JS value into local state, commit
+// changes back via onChange, and re-sync if the JS value changes externally.
+struct WrstTextField: View {
+    let placeholder: String
+    let value: String
+    let onCommit: (String) -> Void
+
+    @State private var text: String
+
+    init(placeholder: String, value: String, onCommit: @escaping (String) -> Void) {
+        self.placeholder = placeholder
+        self.value = value
+        self.onCommit = onCommit
+        _text = State(initialValue: value)
+    }
+
+    var body: some View {
+        TextField(placeholder, text: $text)
+            .onChange(of: text) { _, newValue in
+                if newValue != value { onCommit(newValue) }
+            }
+            .onChange(of: value) { _, newValue in
+                if newValue != text { text = newValue }
+            }
+    }
+}
+
+// A general press wrapper (RN TouchableOpacity-style): tap + long-press over any
+// content, with a press-dim. onLongPressGesture(pressing:perform:) gives the
+// press state (for opacity) and the long action without stealing scroll; a
+// simultaneous TapGesture handles tap. `longFired` (reset on each press-down via
+// `pressing`) keeps a long press from also firing the tap on release. Android
+// twin: TouchableRenderer (combinedClickable + isPressed alpha).
+struct TouchableView<Content: View>: View {
+    let onPress: String?
+    let onLongPress: String?
+    let activeOpacity: Double
+    @ViewBuilder let content: () -> Content
+
+    @State private var pressed = false
+    @State private var longFired = false
+
+    var body: some View {
+        content()
+            .contentShape(Rectangle())
+            .opacity(pressed ? activeOpacity : 1)
+            .onLongPressGesture(
+                minimumDuration: 0.5,
+                maximumDistance: 50,
+                pressing: { isPressing in
+                    pressed = isPressing
+                    if isPressing { longFired = false } // new press starts
+                },
+                perform: {
+                    if let onLongPress {
+                        longFired = true
+                        RuntimeBridge.shared.call(onLongPress)
+                    }
+                })
+            .simultaneousGesture(
+                TapGesture().onEnded {
+                    if !longFired, let onPress { RuntimeBridge.shared.call(onPress) }
+                })
     }
 }

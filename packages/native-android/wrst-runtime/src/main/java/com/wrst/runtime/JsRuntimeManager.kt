@@ -33,7 +33,7 @@ object JsRuntimeManager {
 
     // The JS↔native wire-contract version this host implements (see CONTRACT.md).
     // Must match the bundle's globalThis.__WRST_PROTOCOL__.
-    private const val WRST_PROTOCOL_VERSION = 6
+    private const val WRST_PROTOCOL_VERSION = 10
 
     // Decode the JSON args array JS passes to a native module into a List.
     private fun decodeModuleArgs(json: String): List<Any?> {

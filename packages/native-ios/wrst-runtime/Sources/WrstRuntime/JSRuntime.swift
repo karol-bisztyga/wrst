@@ -9,7 +9,7 @@ import CQuickJS
 final class JSRuntime {
     // The JS↔native wire-contract version this host implements (see CONTRACT.md).
     // Must match the bundle's globalThis.__WRST_PROTOCOL__.
-    static let protocolVersion = 6
+    static let protocolVersion = 10
 
     private var bridge: OpaquePointer?
     private var onError: (String) -> Void = { _ in }
