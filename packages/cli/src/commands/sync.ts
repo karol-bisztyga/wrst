@@ -4,18 +4,18 @@ import { loadConfig, type WrstConfig } from "../config.ts";
 import { applyPermissions } from "../permissions.ts";
 
 // `wrst sync` - apply wrst.config.ts (name / bundle id / applicationId) to the
-// native projects. Also run automatically as the first step of run-*/build-*.
+// native projects. Also run automatically as the first step of run:*/build:*.
 export async function sync(_args: string[]): Promise<void> {
   const cwd = process.cwd();
   applyConfig(cwd, await loadConfig(cwd));
-  console.log("wrst: applied wrst.config.ts → ios/ + android/");
+  console.log("wrst: applied wrst.config.ts → apple-watch/ + wear-os/");
 }
 
 // Writes the config's name/ids into the native projects. wrst owns exactly these
-// fields; everything else in ios/ + android/ is the user's.
+// fields; everything else in apple-watch/ + wear-os/ is the user's.
 export function applyConfig(cwd: string, config: WrstConfig): void {
-  applyIos(cwd, config);
-  applyAndroid(cwd, config);
+  applyAppleWatch(cwd, config);
+  applyWearOs(cwd, config);
   applyPermissions(cwd, config);
 }
 
@@ -26,13 +26,13 @@ function edit(file: string, fn: (s: string) => string): void {
   if (after !== before) writeFileSync(file, after);
 }
 
-function applyIos(cwd: string, config: WrstConfig): void {
-  const iosDir = path.join(cwd, "ios");
-  if (!existsSync(iosDir)) return;
-  const proj = readdirSync(iosDir).find((d) => d.endsWith(".xcodeproj"));
+function applyAppleWatch(cwd: string, config: WrstConfig): void {
+  const appleWatchDir = path.join(cwd, "apple-watch");
+  if (!existsSync(appleWatchDir)) return;
+  const proj = readdirSync(appleWatchDir).find((d) => d.endsWith(".xcodeproj"));
   if (!proj) return;
 
-  edit(path.join(iosDir, proj, "project.pbxproj"), (s) => {
+  edit(path.join(appleWatchDir, proj, "project.pbxproj"), (s) => {
     let out = s;
     if (config.name) {
       out = out.replace(
@@ -54,8 +54,8 @@ function applyIos(cwd: string, config: WrstConfig): void {
   });
 }
 
-function applyAndroid(cwd: string, config: WrstConfig): void {
-  const a = path.join(cwd, "android");
+function applyWearOs(cwd: string, config: WrstConfig): void {
+  const a = path.join(cwd, "wear-os");
   if (!existsSync(a)) return;
 
   if (config.name) {

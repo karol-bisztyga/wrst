@@ -20,8 +20,8 @@ export async function start(_args: string[]): Promise<void> {
   await startDevServer({
     entry: entryPath,
     outdir: path.resolve(cwd, "dist"),
-    httpPort: config.server?.httpPort ?? 8081,
-    wsPort: config.server?.wsPort ?? 8082,
+    httpPort: config.server?.httpPort ?? 8091,
+    wsPort: config.server?.wsPort ?? 8092,
     assetsDir: path.resolve(cwd, config.assets ?? "assets"),
   });
 }

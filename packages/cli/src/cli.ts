@@ -1,7 +1,14 @@
 import { init } from "./commands/init.ts";
 import { start } from "./commands/start.ts";
 import { sync } from "./commands/sync.ts";
-import { runIos, runAndroid, buildIos, buildAndroid } from "./commands/native.ts";
+import {
+  runAppleWatch,
+  runWearOs,
+  buildAppleWatch,
+  buildWearOs,
+  buildReleaseAppleWatch,
+  buildReleaseWearOs,
+} from "./commands/native.ts";
 import { help } from "./commands/help.ts";
 
 const [, , command, ...args] = process.argv;
@@ -17,17 +24,23 @@ async function main(): Promise<void> {
     case "sync":
       await sync(args);
       break;
-    case "run-ios":
-      await runIos(args);
+    case "run:apple-watch":
+      await runAppleWatch(args);
       break;
-    case "run-android":
-      await runAndroid(args);
+    case "run:wear-os":
+      await runWearOs(args);
       break;
-    case "build-ios":
-      await buildIos(args);
+    case "build:apple-watch":
+      await buildAppleWatch(args);
       break;
-    case "build-android":
-      await buildAndroid(args);
+    case "build:wear-os":
+      await buildWearOs(args);
+      break;
+    case "build-release:apple-watch":
+      await buildReleaseAppleWatch(args);
+      break;
+    case "build-release:wear-os":
+      await buildReleaseWearOs(args);
       break;
     case "help":
     case "--help":

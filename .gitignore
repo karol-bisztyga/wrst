@@ -6,8 +6,8 @@ dist
 *.tgz
 
 # native runtimes copied/built into the wrst package by build:native (generated)
-packages/wrst/android/
-packages/wrst/ios/
+packages/wrst/wear-os/
+packages/wrst/apple-watch/
 
 # OS
 .DS_Store

@@ -21,6 +21,7 @@ import { ProgressScreen } from "./ProgressScreen.tsx";
 import { Animations } from "./Animations.tsx";
 import { Images } from "./Images.tsx";
 import { Inputs } from "./Inputs.tsx";
+import { CompanionScreen } from "./Companion.tsx";
 
 createAppConfig({ appBackgroundColor: "#000" });
 
@@ -48,6 +49,7 @@ createNavigation({
     animations: Animations,
     images: Images,
     inputs: Inputs,
+    companion: CompanionScreen,
   },
   showHeader: false,
 });

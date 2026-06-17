@@ -69,7 +69,7 @@ const ALL_ANDROID_PERMS = uniq(
   Object.values(PERMISSION_CATALOG).flatMap((s) => s.android ?? []),
 );
 
-// Reconcile ios/Info.plist + android AndroidManifest.xml to the active
+// Reconcile apple-watch/Info.plist + wear-os AndroidManifest.xml to the active
 // (uncommented) permissions in wrst.config.ts: add what's listed, remove any
 // catalog permission that isn't. Idempotent - it only ever touches the keys/
 // permissions in the catalog, never the user's other entries.
@@ -82,7 +82,7 @@ export function applyPermissions(cwd: string, config: WrstConfig): void {
 type ActivePerms = NonNullable<WrstConfig["permissions"]>;
 
 function applyIosPermissions(cwd: string, active: ActivePerms): void {
-  const plist = path.join(cwd, "ios", "Info.plist");
+  const plist = path.join(cwd, "apple-watch", "Info.plist");
   if (!existsSync(plist)) return;
   let s = readFileSync(plist, "utf8");
 
@@ -112,7 +112,7 @@ function applyIosPermissions(cwd: string, active: ActivePerms): void {
 function applyAndroidPermissions(cwd: string, active: ActivePerms): void {
   const manifest = path.join(
     cwd,
-    "android",
+    "wear-os",
     "app",
     "src",
     "main",

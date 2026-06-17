@@ -27,4 +27,12 @@ export function start(App: Component): void {
     runInitialEffects();
     return tree;
   };
+  // First paint goes through __wrstNavRestore (see CONTRACT.md). createNavigation
+  // installs a stack-aware version at import time; an app WITHOUT navigation never
+  // does, so install a default that renders the single root screen - otherwise the
+  // host's first paint gets an empty stack and shows nothing ("connecting...").
+  if (!(globalThis as any).__wrstNavRestore) {
+    (globalThis as any).__wrstNavRestore = () =>
+      JSON.stringify([JSON.stringify((globalThis as any).render())]);
+  }
 }

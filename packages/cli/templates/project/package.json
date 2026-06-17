@@ -5,10 +5,12 @@
   "type": "module",
   "scripts": {
     "start": "wrst start",
-    "run:ios": "wrst run-ios",
-    "run:android": "wrst run-android",
-    "build:ios": "wrst build-ios",
-    "build:android": "wrst build-android"
+    "run:apple-watch": "wrst run:apple-watch",
+    "run:wear-os": "wrst run:wear-os",
+    "build:apple-watch": "wrst build:apple-watch",
+    "build:wear-os": "wrst build:wear-os",
+    "build-release:apple-watch": "wrst build-release:apple-watch",
+    "build-release:wear-os": "wrst build-release:wear-os"
   },
   "dependencies": {
     "wrst": "^0.1.0"

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Advertises the wrst companion capability so the watch's CapabilityClient can
+     discover this phone app as a reachable counterpart. The watch app advertises
+     the same string (wrst-runtime bundles a matching wear.xml). Merged into the
+     host app's resources by the manifest/resource merger. -->
+<resources>
+  <string-array name="android_wear_capabilities">
+    <item>wrst_companion</item>
+  </string-array>
+</resources>

@@ -22,31 +22,80 @@ function requireTool(bin: string, hint: string): void {
 
 // ─────────────────────────── Android ───────────────────────────
 
-export async function runAndroid(_args: string[]): Promise<void> {
+export async function runWearOs(_args: string[]): Promise<void> {
   const cwd = process.cwd();
   const config = await loadConfig(cwd);
   applyConfig(cwd, config);
 
-  const androidDir = path.join(cwd, "android");
-  if (!existsSync(androidDir)) {
-    console.error("wrst: no android/ project here.");
+  const wearOsDir = path.join(cwd, "wear-os");
+  if (!existsSync(wearOsDir)) {
+    console.error("wrst: no wear-os/ project here.");
     process.exit(1);
   }
   requireTool("adb", "the Android SDK platform-tools");
   ensureAndroidDevice();
 
-  console.log("wrst: building + installing the Wear OS app...");
-  run("./gradlew installDebug", androidDir);
+  // In the companion case a phone + watch emulator are both connected, and the
+  // watch app shares the phone app's applicationId - so a plain installDebug
+  // would also push the watch app onto the phone (signature/clobber errors).
+  // Pick the Wear OS device automatically (ANDROID_SERIAL overrides) and target
+  // only it for both the gradle install and the launch.
+  const serial = pickWearDevice();
+  if (!serial) {
+    console.error(
+      "wrst: couldn't identify the Wear OS device among the connected ones.\n" +
+        "Set ANDROID_SERIAL=<watch-emulator> (see `adb devices`) and retry.",
+    );
+    process.exit(1);
+  }
+
+  console.log(`wrst: building + installing the Wear OS app on ${serial}...`);
+  run(`./gradlew installDebug -Pandroid.injected.device.serial=${serial}`, wearOsDir);
+
+  const adb = `adb -s ${serial}`;
 
   const appId = config.android?.applicationId ?? "com.example.wearos";
   console.log(`wrst: launching ${appId}...`);
   run(
-    `adb shell monkey -p ${appId} -c android.intent.category.LAUNCHER 1`,
+    `${adb} shell monkey -p ${appId} -c android.intent.category.LAUNCHER 1`,
     cwd,
   );
   console.log(
     "wrst: launched - run `wrst start` in another terminal for the bundle + hot reload.",
   );
+}
+
+// All currently-online device serials (adb state "device").
+function onlineSerials(): string[] {
+  return query("adb devices")
+    .split("\n")
+    .slice(1)
+    .map((l) => l.trim())
+    .filter((l) => l.endsWith("\tdevice"))
+    .map((l) => l.split("\t")[0]);
+}
+
+// A Wear OS device reports "watch" in ro.build.characteristics (phones don't).
+function isWatchDevice(serial: string): boolean {
+  try {
+    return query(`adb -s ${serial} shell getprop ro.build.characteristics`)
+      .split(",")
+      .map((s) => s.trim())
+      .includes("watch");
+  } catch {
+    return false;
+  }
+}
+
+// Pick the Wear OS device to target: ANDROID_SERIAL wins; else the connected
+// device whose characteristics say "watch"; else the sole device if there's only
+// one; else null (ambiguous - phone + watch but neither flagged a watch).
+function pickWearDevice(): string | null {
+  if (process.env.ANDROID_SERIAL) return process.env.ANDROID_SERIAL;
+  const serials = onlineSerials();
+  const watches = serials.filter(isWatchDevice);
+  if (watches.length >= 1) return watches[0];
+  return serials.length === 1 ? serials[0] : null;
 }
 
 // Ensure an Android device/emulator is connected; boot an AVD if none is.
@@ -123,29 +172,29 @@ function findEmulator(): string | null {
 
 // ───────────────────────────── iOS ─────────────────────────────
 
-export async function runIos(_args: string[]): Promise<void> {
+export async function runAppleWatch(_args: string[]): Promise<void> {
   if (process.platform !== "darwin") {
-    console.error("wrst: run-ios requires macOS + Xcode.");
+    console.error("wrst: run:apple-watch requires macOS + Xcode.");
     process.exit(1);
   }
   const cwd = process.cwd();
   const config = await loadConfig(cwd);
   applyConfig(cwd, config);
 
-  const iosDir = path.join(cwd, "ios");
-  const projName = existsSync(iosDir)
-    ? readdirSync(iosDir).find((d) => d.endsWith(".xcodeproj"))
+  const appleWatchDir = path.join(cwd, "apple-watch");
+  const projName = existsSync(appleWatchDir)
+    ? readdirSync(appleWatchDir).find((d) => d.endsWith(".xcodeproj"))
     : undefined;
   if (!projName) {
-    console.error("wrst: no ios/*.xcodeproj here.");
+    console.error("wrst: no apple-watch/*.xcodeproj here.");
     process.exit(1);
   }
   requireTool("xcodebuild", "Xcode");
 
-  const project = path.join(iosDir, projName);
+  const project = path.join(appleWatchDir, projName);
   const scheme = firstScheme(project);
   const udid = pickWatchSim();
-  const derived = path.join(iosDir, "build");
+  const derived = path.join(appleWatchDir, "build");
 
   console.log(`wrst: building the Apple Watch app (scheme "${scheme}")...`);
   // Build for a generic watch simulator (reliable) then install to the chosen
@@ -188,10 +237,10 @@ async function embedBundle(
 
 // Copy project assets into the Android app so release builds load them locally
 // (file:///android_asset/wrst-assets/<name>; see AssetResolver.kt).
-function embedAssetsAndroid(cwd: string, config: WrstConfig, androidDir: string): void {
+function embedAssetsAndroid(cwd: string, config: WrstConfig, wearOsDir: string): void {
   const assetsDir = path.resolve(cwd, config.assets ?? "assets");
   if (!existsSync(assetsDir)) return;
-  const dest = path.join(androidDir, "app", "src", "main", "assets", "wrst-assets");
+  const dest = path.join(wearOsDir, "app", "src", "main", "assets", "wrst-assets");
   rmSync(dest, { recursive: true, force: true });
   cpSync(assetsDir, dest, { recursive: true });
   console.log(`wrst: embedded assets → ${path.relative(cwd, dest)}`);
@@ -206,59 +255,59 @@ function embedAssetsIos(cwd: string, config: WrstConfig, appDir: string): void {
     const src = path.join(assetsDir, f);
     if (statSync(src).isFile()) copyFileSync(src, path.join(appDir, f));
   }
-  console.log(`wrst: embedded assets → ios/${path.basename(appDir)}/`);
+  console.log(`wrst: embedded assets → apple-watch/${path.basename(appDir)}/`);
 }
 
-export async function buildAndroid(_args: string[]): Promise<void> {
+export async function buildReleaseWearOs(_args: string[]): Promise<void> {
   const cwd = process.cwd();
   const config = await loadConfig(cwd);
   applyConfig(cwd, config);
 
-  const androidDir = path.join(cwd, "android");
-  if (!existsSync(androidDir)) {
-    console.error("wrst: no android/ project here.");
+  const wearOsDir = path.join(cwd, "wear-os");
+  if (!existsSync(wearOsDir)) {
+    console.error("wrst: no wear-os/ project here.");
     process.exit(1);
   }
   await embedBundle(
     cwd,
     config,
-    path.join(androidDir, "app", "src", "main", "assets", "bundle.js"),
+    path.join(wearOsDir, "app", "src", "main", "assets", "bundle.js"),
   );
-  embedAssetsAndroid(cwd, config, androidDir);
+  embedAssetsAndroid(cwd, config, wearOsDir);
   console.log("wrst: building the release APK...");
-  run("./gradlew assembleRelease", androidDir);
-  console.log("wrst: done → android/app/build/outputs/apk/release/");
+  run("./gradlew assembleRelease", wearOsDir);
+  console.log("wrst: done → wear-os/app/build/outputs/apk/release/");
 }
 
-export async function buildIos(_args: string[]): Promise<void> {
+export async function buildReleaseAppleWatch(_args: string[]): Promise<void> {
   if (process.platform !== "darwin") {
-    console.error("wrst: build-ios requires macOS + Xcode.");
+    console.error("wrst: build-release:apple-watch requires macOS + Xcode.");
     process.exit(1);
   }
   const cwd = process.cwd();
   const config = await loadConfig(cwd);
   applyConfig(cwd, config);
 
-  const iosDir = path.join(cwd, "ios");
-  const projName = existsSync(iosDir)
-    ? readdirSync(iosDir).find((d) => d.endsWith(".xcodeproj"))
+  const appleWatchDir = path.join(cwd, "apple-watch");
+  const projName = existsSync(appleWatchDir)
+    ? readdirSync(appleWatchDir).find((d) => d.endsWith(".xcodeproj"))
     : undefined;
   if (!projName) {
-    console.error("wrst: no ios/*.xcodeproj here.");
+    console.error("wrst: no apple-watch/*.xcodeproj here.");
     process.exit(1);
   }
-  const appFolder = readdirSync(iosDir).find(
+  const appFolder = readdirSync(appleWatchDir).find(
     (d) =>
-      statSync(path.join(iosDir, d)).isDirectory() && !d.endsWith(".xcodeproj"),
+      statSync(path.join(appleWatchDir, d)).isDirectory() && !d.endsWith(".xcodeproj"),
   );
   if (!appFolder) {
-    console.error("wrst: couldn't find the app source folder under ios/.");
+    console.error("wrst: couldn't find the app source folder under apple-watch/.");
     process.exit(1);
   }
-  await embedBundle(cwd, config, path.join(iosDir, appFolder, "bundle.js"));
-  embedAssetsIos(cwd, config, path.join(iosDir, appFolder));
+  await embedBundle(cwd, config, path.join(appleWatchDir, appFolder, "bundle.js"));
+  embedAssetsIos(cwd, config, path.join(appleWatchDir, appFolder));
 
-  const project = path.join(iosDir, projName);
+  const project = path.join(appleWatchDir, projName);
   const scheme = firstScheme(project);
   console.log(`wrst: building the release app (scheme "${scheme}")...`);
   run(
@@ -269,6 +318,49 @@ export async function buildIos(_args: string[]): Promise<void> {
   console.log(
     "wrst: release build complete. For a device build, archive + sign in Xcode (Product → Archive).",
   );
+}
+
+// `wrst build:wear-os` - debug build only (no install); the build half of run:wear-os.
+export async function buildWearOs(_args: string[]): Promise<void> {
+  const cwd = process.cwd();
+  const config = await loadConfig(cwd);
+  applyConfig(cwd, config);
+  const wearOsDir = path.join(cwd, "wear-os");
+  if (!existsSync(wearOsDir)) {
+    console.error("wrst: no wear-os/ project here.");
+    process.exit(1);
+  }
+  console.log("wrst: building the debug APK...");
+  run("./gradlew assembleDebug", wearOsDir);
+  console.log("wrst: done -> wear-os/app/build/outputs/apk/debug/app-debug.apk");
+}
+
+// `wrst build:apple-watch` - debug build only (no install); the build half of run:apple-watch.
+export async function buildAppleWatch(_args: string[]): Promise<void> {
+  if (process.platform !== "darwin") {
+    console.error("wrst: build:apple-watch requires macOS + Xcode.");
+    process.exit(1);
+  }
+  const cwd = process.cwd();
+  const config = await loadConfig(cwd);
+  applyConfig(cwd, config);
+  const appleWatchDir = path.join(cwd, "apple-watch");
+  const projName = existsSync(appleWatchDir)
+    ? readdirSync(appleWatchDir).find((d) => d.endsWith(".xcodeproj"))
+    : undefined;
+  if (!projName) {
+    console.error("wrst: no apple-watch/*.xcodeproj here.");
+    process.exit(1);
+  }
+  const project = path.join(appleWatchDir, projName);
+  const scheme = firstScheme(project);
+  console.log(`wrst: building (Debug, scheme "${scheme}")...`);
+  run(
+    `xcodebuild -project "${project}" -scheme "${scheme}" -configuration Debug ` +
+      `-destination "generic/platform=watchOS Simulator" build`,
+    cwd,
+  );
+  console.log("wrst: debug build complete.");
 }
 
 function firstScheme(project: string): string {

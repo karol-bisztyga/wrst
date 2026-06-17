@@ -13,14 +13,14 @@ UI toolkit (Jetpack Compose on Wear OS, SwiftUI on Apple Watch).
 ## Quickstart
 
 ```sh
-npx wrst init my-app        # scaffold a project (src/, ios/, android/, wrst.config.ts)
+npx wrst init my-app        # scaffold a project (src/, apple-watch/, wear-os/, wrst.config.ts)
 cd my-app
 npm install
 npm start                   # dev server + hot reload (in one terminal)
 
 # in another terminal, run on a watch (loads the bundle from the dev server):
-npm run run:ios             # boots a watchOS simulator, builds, installs, launches
-npm run run:android         # boots a Wear OS emulator, builds, installs, launches
+npm run run:apple-watch     # boots a watchOS simulator, builds, installs, launches
+npm run run:wear-os         # boots a Wear OS emulator, builds, installs, launches
 ```
 
 Then edit `src/App.tsx` and watch it hot-reload on the watch.
@@ -68,10 +68,12 @@ Run with the `wrst` CLI (or the matching `npm run` script in a scaffolded projec
 | -------------------- | --------------------------------------------------------------- |
 | `wrst init <name>`   | Scaffold a new project in `./<name>`                            |
 | `wrst start`         | Dev server + bundler with hot reload                            |
-| `wrst run-ios`       | Build + install + launch on a watchOS simulator                 |
-| `wrst run-android`   | Build + install + launch on a Wear OS device/emulator           |
-| `wrst build-ios`     | Release build (bundle embedded, runs offline)                   |
-| `wrst build-android` | Release build → APK                                             |
+| `wrst run:apple-watch`   | Debug build + install + launch on a watchOS simulator (dev server) |
+| `wrst run:wear-os`       | Debug build + install + launch on a Wear OS device/emulator (dev server) |
+| `wrst build:apple-watch` | Debug build only, no install (the build half of `run:*`)    |
+| `wrst build:wear-os`     | Debug build only, no install                                |
+| `wrst build-release:apple-watch` | Release build (JS bundle embedded, runs offline)    |
+| `wrst build-release:wear-os`     | Release build → APK (JS bundle embedded)            |
 | `wrst sync`          | Apply `wrst.config.ts` (name, bundle id) to the native projects |
 | `wrst help`          | List commands                                                   |
 
@@ -88,12 +90,12 @@ export default {
   entry: "src/entry.ts",
   ios: { bundleId: ".myapp" }, // leading dot: companion-style watch app
   android: { applicationId: "com.example.myapp" },
-  server: { httpPort: 8081, wsPort: 8082 },
+  server: { httpPort: 8091, wsPort: 8092 },
 };
 ```
 
 Don't hand-edit those name/id fields in Xcode/Gradle - wrst overwrites them.
-Everything else in `ios/` and `android/` (icons, signing, permissions) is yours.
+Everything else in `apple-watch/` and `wear-os/` (icons, signing, permissions) is yours.
 
 ## How it works
 
@@ -105,7 +107,7 @@ TSX/JSX → esbuild bundle → QuickJS (in the native app) → JSON UI tree → 
 - **Release:** the bundle is embedded in the app and loaded offline.
 
 The runtime ships inside the `wrst` npm package - a prebuilt **AAR** for Android
-and a **Swift package** for iOS - so your `ios/`/`android/` shells just reference
+and a **Swift package** for iOS - so your `apple-watch/`/`wear-os/` shells just reference
 it from `node_modules`. The JS↔native wire format is documented in
 [CONTRACT.md](./CONTRACT.md).
 
@@ -204,6 +206,48 @@ automatically. Two notes: HealthKit (`heartRate` on iOS) also needs its
 capability enabled in Xcode (beyond Info.plist), and the **runtime** request +
 granted/denied result is handled by the sensor's native module, not the config.
 
+## Companion apps (phone + watch)
+
+A wrst watch app can run **standalone** or as a **companion** to a React Native
+phone app (iOS + Apple Watch via WatchConnectivity, Android + Wear OS via the
+Wearable Data Layer). The OS owns pairing; you only read the link status and
+exchange messages.
+
+Add a watch app to an existing RN project from its root:
+
+```sh
+npx wrst init --companion .
+```
+
+This detects **bare RN vs Expo**, generates the `wear-os/` module, sets up the
+Apple Watch side (an [`@bacons/apple-targets`](https://github.com/EvanBacon/expo-apple-targets)
+target for Expo, or `apple-watch/` files + a one-time Xcode checklist for bare),
+scaffolds the watch UI in `watch/` (+ `wrst.config.ts`), and adds the deps + npm
+scripts. The phone bridge is [`react-native-wrst`](./packages/react-native-wrst).
+
+**On the watch** (your `watch/` UI, authored with `wrst`):
+
+```tsx
+import { Companion } from "wrst";
+
+if (Companion.isCompanionAvailable) Companion.sendMessage({ type: "getData" });
+const sub = Companion.onMessage((msg) => { /* phone replied */ });
+```
+
+**On the phone** (your React Native code):
+
+```ts
+import { Companion } from "react-native-wrst";
+
+const { available } = await Companion.getStatus();
+Companion.onMessage((msg) => Companion.sendMessage({ data: /* ... */ }));
+```
+
+Both sides share one wire contract (capability `wrst_companion`, message path
+`/wrst`, JSON payloads). The typical app pattern is 3-tier: **ask the phone** when
+available → **`fetch()`** directly → **cached `localStorage`** offline. The
+`example/` app's **Companion** screen shows it; signing stays manual on iOS.
+
 ## Requirements
 
 - **Node** 20+
@@ -216,6 +260,7 @@ granted/denied result is handled by the sensor's native module, not the config.
 | ----------------------------- | ----------------------------------------------------- |
 | [`wrst`](./packages/wrst)     | The framework you import (components, hooks, runtime) |
 | [`@wrst/cli`](./packages/cli) | The `wrst` CLI + dev server                           |
+| [`react-native-wrst`](./packages/react-native-wrst) | Phone-side companion bridge for RN apps |
 
 ## Development (this repo)
 

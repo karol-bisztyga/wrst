@@ -7,8 +7,8 @@ const entry = process.env.WRST_ENTRY ?? "src/entry.ts";
 startDevServer({
   entry,
   outdir: process.env.WRST_OUTDIR ?? "dist",
-  httpPort: Number(process.env.WRST_HTTP_PORT ?? 8081),
-  wsPort: Number(process.env.WRST_WS_PORT ?? 8082),
+  httpPort: Number(process.env.WRST_HTTP_PORT ?? 8091),
+  wsPort: Number(process.env.WRST_WS_PORT ?? 8092),
   // Convention: assets/ sits next to src/ (entry is <root>/src/entry.ts).
   assetsDir:
     process.env.WRST_ASSETS ?? path.resolve(path.dirname(entry), "../assets"),

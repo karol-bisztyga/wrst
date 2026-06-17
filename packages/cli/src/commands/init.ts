@@ -2,6 +2,22 @@ import { cp, readdir, readFile, rename, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { initCompanion } from "./initCompanion.ts";
+
+// Extract the value of a `--flag` from argv, supporting both `--flag value` and
+// `--flag=value`. Returns null when the flag is absent, "" when present without
+// a value (e.g. trailing `--companion`).
+function flagValue(args: string[], flag: string): string | null {
+  for (let i = 0; i < args.length; i++) {
+    const a = args[i];
+    if (a === flag) {
+      const next = args[i + 1];
+      return next && !next.startsWith("-") ? next : "";
+    }
+    if (a.startsWith(`${flag}=`)) return a.slice(flag.length + 1);
+  }
+  return null;
+}
 
 // packages/cli/src/commands/init.ts → packages/cli/templates
 const TEMPLATES_DIR = path.join(
@@ -12,9 +28,17 @@ const TEMPLATES_DIR = path.join(
 );
 
 export async function init(args: string[]): Promise<void> {
+  // Companion mode: add a watch app to an EXISTING RN project (path to its root,
+  // defaulting to the cwd). Different flow from the standalone scaffold below.
+  const companion = flagValue(args, "--companion");
+  if (companion !== null) {
+    await initCompanion(companion || ".");
+    return;
+  }
+
   const name = args[0];
   if (!name) {
-    console.error("usage: wrst init <name>");
+    console.error("usage: wrst init <name>\n       wrst init --companion <path-to-rn-project>");
     process.exit(1);
   }
   if (/\s/.test(name)) {
@@ -34,11 +58,13 @@ export async function init(args: string[]): Promise<void> {
     process.exit(1);
   }
 
-  // The JS project at the root, plus the native shells into ios/ and android/.
+  // The JS project at the root, plus the native shells into apple-watch/ and
+  // wear-os/ (named for the platform brand to match the rest of the toolchain
+  // and avoid the which-is-which ambiguity of ios/android).
   await cp(path.join(TEMPLATES_DIR, "project"), dir, { recursive: true });
   for (const [tpl, dest] of [
-    ["native-ios", "ios"],
-    ["native-android", "android"],
+    ["apple-watch", "apple-watch"],
+    ["wear-os", "wear-os"],
   ] as const) {
     const src = path.join(TEMPLATES_DIR, tpl);
     if (existsSync(src)) await cp(src, path.join(dir, dest), { recursive: true });

@@ -13,8 +13,8 @@ export default {
     applicationId: "com.example.__APP_ID__",
   },
   server: {
-    httpPort: 8081,
-    wsPort: 8082,
+    httpPort: 8091,
+    wsPort: 8092,
   },
 
   // Permissions. Uncomment the ones your app needs - `wrst sync` (also run by

@@ -1,0 +1,50 @@
+buildscript {
+  repositories {
+    google()
+    mavenCentral()
+  }
+  dependencies {
+    classpath "com.android.tools.build:gradle:8.+"
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.+"
+  }
+}
+
+apply plugin: "com.android.library"
+apply plugin: "kotlin-android"
+
+// Read a value from the host app's root project (set by the RN template), with a
+// fallback - so this library tracks the consuming app's SDK/versions.
+def safeExtGet(prop, fallback) {
+  rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
+}
+
+android {
+  namespace "com.wrst.companion"
+  compileSdk safeExtGet("compileSdkVersion", 34)
+
+  defaultConfig {
+    minSdkVersion safeExtGet("minSdkVersion", 26)
+    targetSdkVersion safeExtGet("targetSdkVersion", 34)
+  }
+
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_17
+    targetCompatibility JavaVersion.VERSION_17
+  }
+  kotlinOptions {
+    jvmTarget = "17"
+  }
+}
+
+repositories {
+  google()
+  mavenCentral()
+}
+
+dependencies {
+  // Provided by the host app's React Native (version comes from the app).
+  //noinspection GradleDynamicVersion
+  implementation "com.facebook.react:react-android:+"
+  // Wearable Data Layer (CapabilityClient / MessageClient / NodeClient).
+  implementation "com.google.android.gms:play-services-wearable:18.2.0"
+}

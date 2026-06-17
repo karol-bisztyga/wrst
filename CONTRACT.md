@@ -26,7 +26,7 @@ event ──► call(handlerId) ──► handler runs ──► setState(id, va
 The bundle installs a global on load:
 
 ```js
-globalThis.__WRST_PROTOCOL__ = <integer>   // currently 10
+globalThis.__WRST_PROTOCOL__ = <integer>   // currently 11
 ```
 
 Before evaluating the bundle, the host installs `globalThis.__WRST_DEBUG__`
@@ -48,12 +48,14 @@ surface, the entry points, or the reactivity protocol below.
 
 The host calls these globals (installed by `start()` / framework bootstrap):
 
-| Global             | Signature                                      | Purpose                                                                                                                                                                                                                                                                                                                                                                                                              |
-| ------------------ | ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `render`           | `() => Node`                                   | Returns the current UI tree. Host does `JSON.stringify(render())`. Call it for the initial render and to obtain structural updates.                                                                                                                                                                                                                                                                                  |
-| `call`             | `(id: string, ...args) => string \| undefined` | Invokes a registered callback by id (button press, timer fire, fetch resolve/reject). Return value is `JSON.stringify`'d (often `undefined`).                                                                                                                                                                                                                                                                        |
-| `__wrstNavRestore` | `() => string` _(added in protocol v5)_        | Called **once at load** instead of `render()` for the first paint. Renders every level of the navigation stack bottom-first and returns a JSON array of per-level tree-JSON strings (`["{...}", ...]`), leaving the current route at the top. The host uses `[0]` as the root screen and the rest as the pushed back-stack - `[root]` for a fresh start, or the whole path when `persistCurrentScreen` restored one. |
-| `__wrstBack`       | `() => string` _(added in protocol v6)_        | Called by the host **after it pops a screen** (user swipe / system back, or in response to `native.nativeGoBack`). Pops the JS navigation stack to match, re-persists it, and returns the new top route. No-op at the root. Single source of truth: the host pops its view, then calls this - JS never pops on its own.                                                                                              |
+| Global                   | Signature                                          | Purpose                                                                                                                                                                                                                                                                                                                                                                                                              |
+| ------------------------ | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `render`                 | `() => Node`                                       | Returns the current UI tree. Host does `JSON.stringify(render())`. Call it for the initial render and to obtain structural updates.                                                                                                                                                                                                                                                                                  |
+| `call`                   | `(id: string, ...args) => string \| undefined`     | Invokes a registered callback by id (button press, timer fire, fetch resolve/reject). Return value is `JSON.stringify`'d (often `undefined`).                                                                                                                                                                                                                                                                        |
+| `__wrstNavRestore`       | `() => string` _(added in protocol v5)_            | Called **once at load** instead of `render()` for the first paint. Renders every level of the navigation stack bottom-first and returns a JSON array of per-level tree-JSON strings (`["{...}", ...]`), leaving the current route at the top. The host uses `[0]` as the root screen and the rest as the pushed back-stack - `[root]` for a fresh start, or the whole path when `persistCurrentScreen` restored one. |
+| `__wrstBack`             | `() => string` _(added in protocol v6)_            | Called by the host **after it pops a screen** (user swipe / system back, or in response to `native.nativeGoBack`). Pops the JS navigation stack to match, re-persists it, and returns the new top route. No-op at the root. Single source of truth: the host pops its view, then calls this - JS never pops on its own.                                                                                              |
+| `__wrstCompanionStatus`  | `(json: string) => void` _(added in protocol v11)_ | Called by the host whenever the companion link status changes. `json` is `{ available: boolean, reason: "no-device"\|"app-not-installed"\|"unreachable"\|null }`. Updates the reactive `Companion.isCompanionAvailable` / `Companion.reason` cells so dependent views recompose. Only installed when the app imports `Companion`.                                                                                    |
+| `__wrstCompanionMessage` | `(json: string) => void` _(added in protocol v11)_ | Called by the host with the JSON payload of an incoming message from the paired phone app; dispatched to every `Companion.onMessage` handler.                                                                                                                                                                                                                                                                        |
 
 ## UI tree schema (JSON)
 
@@ -273,6 +275,26 @@ JS reaches these via `getPermissionStatus(name)` (sync) and
 iOS is per-framework (currently `activity`/CoreMotion; others report
 `"undetermined"`).
 
+### Companion (phone↔watch link) - _added in protocol v11_
+
+For apps that run as a **companion** to a React Native phone app. The OS owns
+pairing; this surface only reads the link status and exchanges messages. Apple
+Watch implements it over **WatchConnectivity** (`WCSession`): reachability +
+`isCompanionAppInstalled`. Wear OS implements it over the **Wearable Data Layer**:
+`CapabilityClient` (a capability string the phone app advertises) + `NodeClient`
+for reachability, `MessageClient` for send/receive. Both are **design-identical**.
+
+| Function                | Signature                | Notes                                                                                                                                                                          |
+| ----------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `nativeCompanionStatus` | `() => string`           | _optional._ Sync read at startup. JSON `{ available: boolean, reason: "no-device"\|"app-not-installed"\|"unreachable"\|null }`. Absent ⇒ JS assumes unavailable (`no-device`). |
+| `nativeCompanionSend`   | `(json: string) => void` | _optional._ Fire-and-forget send of a message payload to the paired phone app.                                                                                                 |
+
+The host pushes link-status changes via `__wrstCompanionStatus(json)` and
+incoming messages via `__wrstCompanionMessage(json)` (entry points above). JS
+reaches all of this via the public `Companion` API: reactive
+`Companion.isCompanionAvailable` (the **single behavior branch**) + `Companion.reason`
+(UI text only), `Companion.sendMessage(msg)`, `Companion.onMessage(handler)`.
+
 ## Dev transport (server ↔ host)
 
 Used only during development (hot reload). Not part of the runtime contract, but
@@ -282,7 +304,7 @@ both hosts implement the client side.
   - `200` + body → the bundle (authoritative).
   - `422` + body → a build error message to display instead of rendering.
   - `503` → no bundle built yet; wait.
-- **WebSocket** (`:8082`):
+- **WebSocket** (`:8092`):
   - Host → server on connect: `{ "type": "hello", "name": "<device name>" }`.
   - Host → server (debug only): `{ "type": "log", "level": "log"|"warn"|"error", "message": string }`
     - forwarded `console.*` calls; the dev server streams them to its console.

@@ -125,6 +125,13 @@ export const MenuScreen: Component = () => {
           onPress={() => navigate("inputs")}
           label="Inputs"
         />
+        <View style={{ height: 4 }} />
+        <StyledButton
+          width={120}
+          height={36}
+          onPress={() => navigate("companion")}
+          label="Companion"
+        />
         <View style={{ height: 8 }} />
       </VerticalView>
     </ScrollView>

@@ -11,7 +11,7 @@ npm start
 
 This package is the framework you import (components, hooks, the runtime). It also
 ships the native runtimes (a prebuilt Android **AAR** and an iOS **Swift package**)
-so scaffolded `ios/`/`android/` shells reference them from `node_modules`.
+so scaffolded `apple-watch/`/`wear-os/` shells reference them from `node_modules`.
 
 ```tsx
 import {

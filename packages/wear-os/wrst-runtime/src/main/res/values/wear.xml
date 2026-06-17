@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Advertises the wrst companion capability so the phone app's CapabilityClient
+     can discover this watch app as a reachable counterpart (and so this watch's
+     own CapabilityManager finds the phone, which advertises the same string via
+     react-native-wrst). Bundled in the runtime AAR → merges into any consumer
+     watch app automatically. See CONTRACT.md. -->
+<resources>
+  <string-array name="android_wear_capabilities">
+    <item>wrst_companion</item>
+  </string-array>
+</resources>

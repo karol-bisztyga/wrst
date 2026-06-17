@@ -1,7 +1,7 @@
 // Populates the wrst package with the native runtimes so a consumer's scaffolded
 // app can reference them from node_modules/wrst (Option B distribution):
-//   wrst/android/wrst-runtime.aar   ← prebuilt Android AAR
-//   wrst/ios/wrst-runtime/          ← iOS Swift package (source)
+//   wrst/wear-os/wrst-runtime.aar     ← prebuilt Android AAR
+//   wrst/apple-watch/wrst-runtime/    ← iOS Swift package (source)
 // Run by `prepack` at publish time (and manually during dev).
 import { execSync } from "node:child_process";
 import { cpSync, mkdirSync, rmSync, existsSync } from "node:fs";
@@ -11,17 +11,17 @@ import { fileURLToPath } from "node:url";
 const here = path.dirname(fileURLToPath(import.meta.url));
 const wrstPkg = path.join(here, "..");
 const repo = path.join(wrstPkg, "..", "..");
-const androidProj = path.join(repo, "packages", "native-android");
-const iosPkgSrc = path.join(repo, "packages", "native-ios", "wrst-runtime");
+const wearOsProj = path.join(repo, "packages", "wear-os");
+const appleWatchPkgSrc = path.join(repo, "packages", "apple-watch", "wrst-runtime");
 
-// 1) Android: build the AAR and copy it in.
+// 1) Wear OS: build the AAR and copy it in.
 console.log("[build:native] building Android AAR...");
 execSync("./gradlew :wrst-runtime:assembleRelease", {
-  cwd: androidProj,
+  cwd: wearOsProj,
   stdio: "inherit",
 });
 const aar = path.join(
-  androidProj,
+  wearOsProj,
   "wrst-runtime",
   "build",
   "outputs",
@@ -29,17 +29,17 @@ const aar = path.join(
   "wrst-runtime-release.aar",
 );
 if (!existsSync(aar)) throw new Error(`AAR not found at ${aar}`);
-mkdirSync(path.join(wrstPkg, "android"), { recursive: true });
-cpSync(aar, path.join(wrstPkg, "android", "wrst-runtime.aar"));
+mkdirSync(path.join(wrstPkg, "wear-os"), { recursive: true });
+cpSync(aar, path.join(wrstPkg, "wear-os", "wrst-runtime.aar"));
 
-// 2) iOS: copy the Swift package source (skip any build output).
+// 2) Apple Watch: copy the Swift package source (skip any build output).
 console.log("[build:native] copying iOS Swift package...");
-const iosDest = path.join(wrstPkg, "ios", "wrst-runtime");
-rmSync(iosDest, { recursive: true, force: true });
-mkdirSync(path.dirname(iosDest), { recursive: true });
-cpSync(iosPkgSrc, iosDest, {
+const appleWatchDest = path.join(wrstPkg, "apple-watch", "wrst-runtime");
+rmSync(appleWatchDest, { recursive: true, force: true });
+mkdirSync(path.dirname(appleWatchDest), { recursive: true });
+cpSync(appleWatchPkgSrc, appleWatchDest, {
   recursive: true,
   filter: (src) => !/(^|\/)(build|\.build|DerivedData)(\/|$)/.test(src),
 });
 
-console.log("[build:native] done → packages/wrst/{android,ios}");
+console.log("[build:native] done → packages/wrst/{wear-os,apple-watch}");

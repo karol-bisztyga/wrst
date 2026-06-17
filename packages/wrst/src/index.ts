@@ -55,6 +55,14 @@ export type {
   PermissionStatus,
 } from "./runtime/permissions.ts";
 
+// Companion - phone↔watch link when running as a companion to an RN phone app.
+export { Companion } from "./runtime/companion.ts";
+export type {
+  CompanionReason,
+  CompanionMessage,
+  CompanionSubscription,
+} from "./runtime/companion.ts";
+
 // Engine motion sensors (accelerometer / gyroscope / magnetometer).
 export { subscribeSensor, Sensors } from "./runtime/sensors.ts";
 export { useSensor } from "./runtime/hooks/useSensor.ts";
