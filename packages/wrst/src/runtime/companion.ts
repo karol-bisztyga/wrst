@@ -67,8 +67,12 @@ native()?.registerState(REASON_ID, initial.reason);
 function makeProxy<T>(id: string, fallback: T): T {
   const get = (): T => {
     recordRead(id);
-    const value = native()?.getState(id);
-    return (value ?? fallback) as T;
+    const n = native();
+    // Trust getState's value, INCLUDING null: reason is null when the link is
+    // available, and the cell is always seeded by registerState. Coalescing to
+    // `fallback` here would mask that null back into a stale "no-device".
+    // `fallback` only applies when there's no native host at all.
+    return n ? (n.getState(id) as T) : fallback;
   };
   return new Proxy({} as any, {
     get(_t, prop) {

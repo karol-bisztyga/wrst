@@ -29,7 +29,13 @@ export function useState<T>(
 
   const get = (): T => {
     recordRead(id);
-    return (native()?.getState(id) as T) ?? resolved;
+    const n = native();
+    // Trust getState's value, INCLUDING null: the cell is always seeded by
+    // registerState above, so a null here is a real state value (e.g.
+    // useState<string|null>("x"); setX(null)) - not a missing cell. Coalescing
+    // it to `resolved` would mask the null back to the initial value. `resolved`
+    // is only the fallback for when there's no native host at all.
+    return n ? (n.getState(id) as T) : resolved;
   };
 
   const stateValue = new Proxy({} as any, {

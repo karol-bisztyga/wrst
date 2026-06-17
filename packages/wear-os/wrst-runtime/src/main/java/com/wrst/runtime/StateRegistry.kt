@@ -7,13 +7,16 @@ import org.json.JSONObject
 import java.util.concurrent.ConcurrentHashMap
 
 object StateRegistry {
-    val states = ConcurrentHashMap<String, MutableState<Any>>()
+    // Cell values are nullable: a JS state value can legitimately be null (e.g.
+    // useState<string|null>). The MutableState object stored in the map is always
+    // non-null; only the value it wraps may be null.
+    val states = ConcurrentHashMap<String, MutableState<Any?>>()
 
-    fun register(id: String, value: Any) {
+    fun register(id: String, value: Any?) {
         states[id] = mutableStateOf(value)
     }
 
-    fun set(id: String, value: Any) {
+    fun set(id: String, value: Any?) {
         states[id]?.value = value
     }
 

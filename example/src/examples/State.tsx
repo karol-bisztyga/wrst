@@ -15,6 +15,8 @@ export const State: Component = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const maxItems = 5;
 
+  const [ns, setNs] = useState<string | null>("hello");
+
   return (
     <View>
       <View
@@ -84,6 +86,16 @@ export const State: Component = () => {
               }}
             />
           </HorizontalView>
+          <View style={{ height: 10 }} />
+          <StyledButton
+            label={`change ${ns}`}
+            width={180}
+            onPress={() => {
+              setNs((prev) =>
+                prev ? null : "number " + Math.floor(Math.random() * 10),
+              );
+            }}
+          />
           <View style={{ height: 10 }} />
           <StyledButton
             label="Change State"

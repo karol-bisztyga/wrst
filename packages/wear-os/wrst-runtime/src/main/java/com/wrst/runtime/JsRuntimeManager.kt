@@ -136,13 +136,16 @@ object JsRuntimeManager {
                 }
                 function("registerState") { args: Array<Any?> ->
                     val id = args.getOrNull(0) as? String ?: return@function
-                    val value = args.getOrNull(1) ?: return@function
-                    StateRegistry.register(id, value)
+                    // Pass the value through as-is, INCLUDING null: a JS `null`
+                    // (e.g. useState<string|null>("x") then setX(null)) is a real
+                    // value, not a missing arg. The old Elvis guard dropped it, so
+                    // the cell stayed frozen at its previous value. iOS twin: the C
+                    // shim JSON-stringifies null to "null" (qjs_bridge.c).
+                    StateRegistry.register(id, args.getOrNull(1))
                 }
                 function("setState") { args: Array<Any?> ->
                     val id = args.getOrNull(0) as? String ?: return@function
-                    val value = args.getOrNull(1) ?: return@function
-                    StateRegistry.set(id, value)
+                    StateRegistry.set(id, args.getOrNull(1))
                 }
                 function("getState") { args: Array<Any?> ->
                     val id = args.getOrNull(0) as? String ?: return@function null
