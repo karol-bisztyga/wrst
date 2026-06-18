@@ -33,7 +33,7 @@ type Config = {
    * removed/renamed, or the data is corrupt) it's cleared and the app starts at
    * `initial`.
    *
-   * **Always on in debug** regardless of this flag, so hot reload keeps you on
+   * **Always on in debug** regardless of this flag, so live reload keeps you on
    * the current screen instead of resetting to `initial`.
    *
    * @default false
@@ -54,7 +54,11 @@ function isDebug(): boolean {
 
 function storage() {
   return (globalThis as any).localStorage as
-    | { getItem(k: string): string | null; setItem(k: string, v: string): void; removeItem(k: string): void }
+    | {
+        getItem(k: string): string | null;
+        setItem(k: string, v: string): void;
+        removeItem(k: string): void;
+      }
     | undefined;
 }
 
@@ -89,7 +93,7 @@ function persistStack(): void {
 export function createNavigation(cfg: Config): void {
   if (config !== null) throw new Error("createNavigation already called");
   config = cfg;
-  // Debug forces persistence on (keeps the current screen across hot reloads);
+  // Debug forces persistence on (keeps the current screen across live reloads);
   // in release it follows the flag (default off).
   persistEnabled = isDebug() || (cfg.persistCurrentScreen ?? false);
 

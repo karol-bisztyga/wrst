@@ -1,0 +1,60 @@
+---
+title: Companion (React Native)
+description: Add a watch app to a React Native phone app and message between phone and watch.
+---
+
+# Companion mode (React Native)
+
+A wrst app can run **standalone** (a self-contained watch app) or as a
+**companion** to a phone app. Companion mode is designed to work alongside
+**React Native**: the watch app talks to its paired phone app over the platform
+link (WatchConnectivity on iOS, the Wearable Data Layer on Android).
+
+## Add a watch app to a React Native project
+
+Run this inside your existing React Native project:
+
+```sh
+npx wrst init --companion .
+```
+
+This adds the watch app and wires up the phone side via the
+`react-native-wrst` bridge.
+
+## The `Companion` API (watch side)
+
+Import `Companion` from `wrst`:
+
+```tsx
+import { Companion } from "wrst";
+```
+
+- **`Companion.isCompanionAvailable`** - reactive boolean: is the paired phone app
+  reachable right now? Use it directly in JSX and it updates when the link changes.
+- **`Companion.reason`** - why the link is unavailable (or `null` when available),
+  for UI text.
+- **`Companion.sendMessage(message)`** - send a message to the phone (fire-and-forget).
+- **`Companion.onMessage(handler)`** - subscribe to messages pushed from the phone;
+  returns a subscription with `unsubscribe()`.
+
+```tsx
+import { useEffect, useState, Text, Button } from "wrst";
+import { Companion } from "wrst";
+
+const [last, setLast] = useState("");
+
+useEffect(() => {
+  const sub = Companion.onMessage((msg) => setLast(JSON.stringify(msg)));
+  return () => sub.unsubscribe();
+}, []);
+
+// elsewhere:
+// <Button onPress={() => Companion.sendMessage({ type: 'ping' })}>...</Button>
+```
+
+import { Callout } from "nextra/components";
+
+<Callout type="info">
+  Setting up a companion app and running it properly requires some manual steps,
+  this will be covered in the near future with documentation and tutorials.
+</Callout>

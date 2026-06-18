@@ -1,6 +1,13 @@
 import { execSync, spawn } from "node:child_process";
 import path from "node:path";
-import { existsSync, readdirSync, statSync, copyFileSync, cpSync, rmSync } from "node:fs";
+import {
+  existsSync,
+  readdirSync,
+  statSync,
+  copyFileSync,
+  cpSync,
+  rmSync,
+} from "node:fs";
 import { loadConfig, type WrstConfig } from "../config.ts";
 import { applyConfig } from "./sync.ts";
 import { bundleOnce } from "../bundler.ts";
@@ -50,7 +57,10 @@ export async function runWearOs(_args: string[]): Promise<void> {
   }
 
   console.log(`wrst: building + installing the Wear OS app on ${serial}...`);
-  run(`./gradlew installDebug -Pandroid.injected.device.serial=${serial}`, wearOsDir);
+  run(
+    `./gradlew installDebug -Pandroid.injected.device.serial=${serial}`,
+    wearOsDir,
+  );
 
   const adb = `adb -s ${serial}`;
 
@@ -61,7 +71,7 @@ export async function runWearOs(_args: string[]): Promise<void> {
     cwd,
   );
   console.log(
-    "wrst: launched - run `wrst start` in another terminal for the bundle + hot reload.",
+    "wrst: launched - run `wrst start` in another terminal for the bundle + live reload.",
   );
 }
 
@@ -212,7 +222,7 @@ export async function runAppleWatch(_args: string[]): Promise<void> {
   run(`xcrun simctl launch "${udid}" "${bundleId}"`, cwd);
   run("open -a Simulator", cwd);
   console.log(
-    "wrst: launched - run `wrst start` in another terminal for the bundle + hot reload.",
+    "wrst: launched - run `wrst start` in another terminal for the bundle + live reload.",
   );
 }
 
@@ -237,10 +247,21 @@ async function embedBundle(
 
 // Copy project assets into the Android app so release builds load them locally
 // (file:///android_asset/wrst-assets/<name>; see AssetResolver.kt).
-function embedAssetsAndroid(cwd: string, config: WrstConfig, wearOsDir: string): void {
+function embedAssetsAndroid(
+  cwd: string,
+  config: WrstConfig,
+  wearOsDir: string,
+): void {
   const assetsDir = path.resolve(cwd, config.assets ?? "assets");
   if (!existsSync(assetsDir)) return;
-  const dest = path.join(wearOsDir, "app", "src", "main", "assets", "wrst-assets");
+  const dest = path.join(
+    wearOsDir,
+    "app",
+    "src",
+    "main",
+    "assets",
+    "wrst-assets",
+  );
   rmSync(dest, { recursive: true, force: true });
   cpSync(assetsDir, dest, { recursive: true });
   console.log(`wrst: embedded assets → ${path.relative(cwd, dest)}`);
@@ -298,13 +319,20 @@ export async function buildReleaseAppleWatch(_args: string[]): Promise<void> {
   }
   const appFolder = readdirSync(appleWatchDir).find(
     (d) =>
-      statSync(path.join(appleWatchDir, d)).isDirectory() && !d.endsWith(".xcodeproj"),
+      statSync(path.join(appleWatchDir, d)).isDirectory() &&
+      !d.endsWith(".xcodeproj"),
   );
   if (!appFolder) {
-    console.error("wrst: couldn't find the app source folder under apple-watch/.");
+    console.error(
+      "wrst: couldn't find the app source folder under apple-watch/.",
+    );
     process.exit(1);
   }
-  await embedBundle(cwd, config, path.join(appleWatchDir, appFolder, "bundle.js"));
+  await embedBundle(
+    cwd,
+    config,
+    path.join(appleWatchDir, appFolder, "bundle.js"),
+  );
   embedAssetsIos(cwd, config, path.join(appleWatchDir, appFolder));
 
   const project = path.join(appleWatchDir, projName);
@@ -332,7 +360,9 @@ export async function buildWearOs(_args: string[]): Promise<void> {
   }
   console.log("wrst: building the debug APK...");
   run("./gradlew assembleDebug", wearOsDir);
-  console.log("wrst: done -> wear-os/app/build/outputs/apk/debug/app-debug.apk");
+  console.log(
+    "wrst: done -> wear-os/app/build/outputs/apk/debug/app-debug.apk",
+  );
 }
 
 // `wrst build:apple-watch` - debug build only (no install); the build half of run:apple-watch.

@@ -1,0 +1,172 @@
+---
+title: Components
+description: The built-in component set and the native widget each renders to.
+---
+
+import { Native } from "../components/Native.jsx";
+
+# Components
+
+wrst components are imported from `wrst` and render to native widgets on each
+platform. Each component below shows what it maps to on **Wear OS** (Jetpack
+Compose) and **Apple Watch** (SwiftUI).
+
+## Layout & containers
+
+### View
+
+<Native wear="Box" apple="ZStack" />
+
+A container that stacks its children on top of each other (overlay). The base
+building block for layouts and backgrounds.
+
+### VerticalView
+
+<Native wear="Column" apple="VStack" />
+
+Stacks its children top-to-bottom.
+
+### HorizontalView
+
+<Native wear="Row" apple="HStack" />
+
+Stacks its children left-to-right.
+
+### ScrollView (Vertical)
+
+<Native wear="ScalingLazyColumn" apple="ScrollView" />
+
+A vertically scrollable container for content taller than the screen.
+
+### ScalingScrollView (Vertical)
+
+<Native wear="ScalingLazyColumn" apple="List" />
+
+A scrollable container with the watch-style scaling effect, where items shrink
+toward the edges of the screen.
+
+## Content
+
+### Text
+
+<Native wear="Text" apple="Text" />
+
+Displays text. Style it with `color`, `textAlign`, and the usual layout props.
+
+### Image
+
+<Native wear="Image" apple="AsyncImage" />
+
+Displays an image. `ImageResizeMode` controls how it fits its frame.
+
+### Icon
+
+<Native wear="Icon" apple="Image (SF Symbol)" />
+
+Renders a built-in icon by name (see the `IconName` type for the available set).
+
+### Progress
+
+<Native wear="CircularProgressIndicator" apple="ProgressView" />
+
+Shows progress - determinate (with a value) or indeterminate (spinner).
+
+### List
+
+<Native wear="rendered children" apple="ForEach" />
+
+Maps an array of data to nodes via a `renderItem(item, index)` function. It's a
+data-to-UI helper, not a scroll container - wrap it in a `ScrollView` if the
+content can overflow.
+
+## Input
+
+### Button
+
+<Native wear="Box (clickable)" apple="Button" />
+
+A pressable container. Takes an `onPress` handler and renders its children as the
+label.
+
+### Touchable
+
+<Native wear="Box (clickable)" apple="ZStack (tap)" />
+
+Makes arbitrary content pressable, with `onPress` / `onLongPress` and an
+`activeOpacity` while held.
+
+### TextInput
+
+<Native wear="RemoteInput" apple="TextField" />
+
+Text entry. On Wear OS it opens the system remote-input screen; on Apple Watch it
+uses the native text field.
+
+### Toggle
+
+<Native wear="ToggleChip" apple="Toggle" />
+
+An on/off switch with a label.
+
+### Slider
+
+<Native wear="InlineSlider" apple="Slider" />
+
+Pick a numeric value from a continuous (or stepped) range.
+
+### Stepper
+
+<Native wear="Stepper" apple="Stepper" />
+
+Increment / decrement a numeric value with + and − controls.
+
+### Picker
+
+<Native wear="Picker" apple="Picker" />
+
+Choose one option from a scrollable list of choices.
+
+### RadioGroup
+
+<Native wear="RadioButton" apple="Button" />
+
+Single choice from a set of options, shown as a labeled radio list.
+
+### Crown
+
+<Native wear="Box (rotary)" apple="digitalCrownRotation" />
+
+Reacts to the watch's rotating crown / bezel to drive a numeric value.
+
+## Styling
+
+Pass a `style` object. Common props:
+
+- `width` / `height` - a number, or `"fill"` to fill the parent
+- `backgroundColor`, `color` - colors (hex like `#fff` or `rgba(...)`)
+- `horizontalAlignment` / `verticalAlignment` - e.g. `"center"`
+- `textAlign` - text alignment
+- padding and spacing props
+
+```tsx
+<View
+  style={{
+    width: "fill",
+    height: "fill",
+    verticalAlignment: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  }}
+>
+  <Text style={{ color: "#fff", textAlign: "center", width: "fill" }}>
+    Centered
+  </Text>
+</View>
+```
+
+import { Callout } from "nextra/components";
+
+<Callout type="info">
+  Both native renderers are kept design-identical, so the same `style` produces
+  the same look on Wear OS and Apple Watch. The set of supported style props is
+  still growing - see [Status & roadmap](/docs/status).
+</Callout>

@@ -20,7 +20,7 @@ import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 
 // The public entry point of the wrst runtime. A host app's Activity just does
 // `setContent { WrstHost() }`; everything else (QuickJS, dev-server connection,
-// navigation, rendering, hot reload) lives here. This is the Android twin of
+// navigation, rendering, live reload) lives here. This is the Android twin of
 // the iOS `WrstRootView`.
 //
 // Native capabilities (the extension hook) are registered separately via
@@ -92,7 +92,7 @@ fun WrstHost() {
     // are identical (an unchanged bundle wouldn't change messageState).
     val loadCounter = remember { mutableStateOf(0) }
 
-    // Debug builds hot-reload from the dev server; release builds load the JS
+    // Debug builds live-reload from the dev server; release builds load the JS
     // bundle embedded in assets/ (the AAR is prebuilt, so we detect the *app's*
     // build type at runtime via FLAG_DEBUGGABLE rather than BuildConfig.DEBUG).
     DisposableEffect(Unit) {
@@ -237,7 +237,7 @@ fun WrstHost() {
 
     // Root background behind every screen - fills any area the NavHost doesn't
     // cover (e.g. the reveal during a swipe-back). Color comes from
-    // createAppConfig() in JS and updates on hot reload.
+    // createAppConfig() in JS and updates on live reload.
     Box(modifier = Modifier.fillMaxSize().background(AppConfig.backgroundColor.value)) {
         SwipeDismissableNavHost(
             navController = navController,

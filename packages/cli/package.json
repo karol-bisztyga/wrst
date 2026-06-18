@@ -2,10 +2,13 @@
   "name": "@wrst/cli",
   "version": "0.1.0",
   "description": "wrst dev server, bundler, and project CLI",
-  "license": "ISC",
+  "license": "MIT",
   "type": "module",
   "bin": {
     "wrst": "./bin/wrst.mjs"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "files": [
     "src",

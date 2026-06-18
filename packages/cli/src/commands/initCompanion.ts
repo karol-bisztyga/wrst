@@ -358,7 +358,7 @@ Libraries* → **+** → *Add Other → Add Package Dependency* →
 ## Dev loop
 
 Run \`npx wrst start\` (the dev server) and build from Xcode / \`expo run:ios\`; the
-watch pulls its JS bundle from the dev server and hot-reloads.
+watch pulls its JS bundle from the dev server and live-reloads.
 `;
 
 // Step 8: Apple Watch via Expo. We don't hand-edit the pbxproj (prebuild would
@@ -498,7 +498,7 @@ edit your \`ios/*.xcodeproj\` (too risky), so add the target once in Xcode:
    you attach to an existing app (step 2).
 
 Then run \`npx wrst start\` (dev server) and build from Xcode; the watch pulls its
-JS bundle and hot-reloads. The phone side is already wired via \`react-native-wrst\`
+JS bundle and live-reloads. The phone side is already wired via \`react-native-wrst\`
 (\`import { Companion } from "react-native-wrst"\`).
 `;
 }
@@ -787,7 +787,7 @@ export async function initCompanion(projectPath: string): Promise<void> {
   console.log("\n  Next:");
   console.log("    1. npm install                      # pull the new deps");
   console.log(
-    "    2. npm run wrst:start               # dev server (watch UI hot reload)",
+    "    2. npm run wrst:start               # dev server (watch UI live reload)",
   );
   console.log("    3. build the watch apps:");
   console.log("         • Wear OS:     npm run wrst:run:wear-os");

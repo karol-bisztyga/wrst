@@ -1,0 +1,44 @@
+---
+title: Status & roadmap
+description: What works today, and what's still early.
+---
+
+# Status & roadmap
+
+import { Callout } from "nextra/components";
+
+<Callout type="warning">
+  **wrst is an early-stage MVP.** It works end-to-end - you can develop and ship
+  release builds on both Wear OS and Apple Watch - but the API is small and
+  still evolving, and not everything is battle-tested. Expect rough edges, and
+  please [open issues](https://github.com/karol-bisztyga/wrst/issues).
+</Callout>
+
+## What works today
+
+- Writing React-style components in TypeScript that render on **Wear OS** and
+  **Apple Watch** from one codebase.
+- Reactive state (`useState`), effects (`useEffect`), and navigation.
+- A built-in runtime: `fetch`, `localStorage`, timers, `Device`, motion sensors,
+  and runtime permissions.
+- **Standalone** and **companion** (React Native) apps.
+- Live reload during development, and release builds that run offline.
+
+## Known limitations
+
+- The component set and style props are still growing.
+- The two native renderers are kept design-identical, but not every prop is
+  supported on both yet.
+- APIs may change between `0.x` releases.
+- Companion app set up requires some manual steps, documentation, tutorials, and, hopefully, automations will come soon.
+
+## Roadmap
+
+The direction is to keep both native renderers in lock-step while expanding UI
+capabilities and the runtime. For the latest, watch the
+[GitHub repository](https://github.com/karol-bisztyga/wrst).
+
+<Callout type="info">
+  Found something missing or broken? Issues and PRs are very welcome - early
+  feedback shapes what gets built next.
+</Callout>

@@ -10,7 +10,7 @@ Commands:
   init --companion <path>
                       Add a wrst watch app to an existing React Native project
                       (e.g. \`wrst init --companion .\`)
-  start               Start the dev server + bundler (hot reload)
+  start               Start the dev server + bundler (live reload)
   sync                Apply wrst.config.ts (name, bundle id) to apple-watch/ + wear-os/
   run:apple-watch     Debug build + run on a watchOS simulator (dev server)
   run:wear-os         Debug build + install on a Wear OS device/emulator (dev server)

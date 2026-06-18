@@ -39,6 +39,13 @@ export const Styling: Component = () => {
     }
   };
 
+  const styles = {
+    item: {
+      width: "fill",
+      horizontalAlignment: "center",
+    },
+  };
+
   return (
     <ScalingScrollView
       style={{
@@ -47,17 +54,14 @@ export const Styling: Component = () => {
         backgroundColor: theme.colors.background,
       }}
     >
-      <VerticalView
-        style={{
-          width: "fill",
-          padding: theme.spacing.md,
-          horizontalAlignment: "center",
-        }}
-      >
+      <VerticalView style={styles.item}>
         <Text style={{ color: theme.colors.text }}>styling</Text>
         <View style={{ height: theme.spacing.md }} />
+      </VerticalView>
 
-        {/* linear gradient + shadow + rounded corners */}
+      {/* linear gradient + shadow + rounded corners */}
+
+      <VerticalView style={styles.item}>
         <VerticalView
           style={{
             width: 150,
@@ -79,24 +83,30 @@ export const Styling: Component = () => {
           </Text>
           <View style={{ height: theme.spacing.md }} />
         </VerticalView>
+      </VerticalView>
 
-        {/* buttons */}
-        <View style={{ height: theme.spacing.md }} />
+      {/* buttons */}
+      <VerticalView style={styles.item}>
+        <View style={{ height: theme.spacing.xl }} />
 
         <StyledButton
-          label="Change gradient type"
+          label="Change type"
+          width="fill"
           onPress={changeGradientType}
         />
         <View style={{ height: theme.spacing.md }} />
 
         <StyledButton
-          label="Change gradient direction"
+          label="Change direction"
+          width="fill"
           onPress={changeGradientDirection}
         />
 
-        <View style={{ height: theme.spacing.md }} />
+        <View style={{ height: theme.spacing.xl }} />
+      </VerticalView>
 
-        {/* radial gradient, circular */}
+      {/* radial gradient, circular */}
+      <VerticalView style={styles.item}>
         <View
           style={{
             size: 80,
@@ -107,8 +117,10 @@ export const Styling: Component = () => {
             borderRadius: theme.radius.pill,
           }}
         />
+      </VerticalView>
 
-        {/* themed surface card */}
+      {/* themed surface card */}
+      <VerticalView style={styles.item}>
         <View
           style={{
             width: 150,

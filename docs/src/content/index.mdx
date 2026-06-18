@@ -1,0 +1,64 @@
+---
+title: Introduction
+description: Build smartwatch apps with React and TypeScript - one codebase for Wear OS and Apple Watch.
+---
+
+# Introduction
+
+**wrst** lets you build smartwatch apps with React and TypeScript. You write
+React-style components once, and they run natively on both **Wear OS** (rendered
+with Jetpack Compose) and **Apple Watch** (rendered with SwiftUI).
+
+If you've written React, you already know the model: components are functions,
+state is reactive (`useState`), side effects run in `useEffect`, and you navigate
+between screens. wrst brings that to the wrist.
+
+import { Callout } from "nextra/components";
+
+<Callout type="info">
+  **Status: early but real.** wrst works end-to-end today - you can develop and
+  ship release builds on both platforms. It's an MVP: the API is small and still
+  evolving, and not everything is battle-tested yet. See [Status &
+  roadmap](/docs/status).
+</Callout>
+
+## What you get
+
+- **One codebase, two platforms** - Wear OS and Apple Watch from the same TypeScript.
+- **React-style API** - components, `useState`, `useEffect`, navigation.
+- **Live reload** - save and see the change on the watch instantly.
+- **Standalone or companion** - ship a self-contained watch app, or pair it with
+  a phone app. wrst is designed to work alongside **React Native**, with a
+  phone↔watch messaging API.
+- **Built-in runtime** - `fetch`, `localStorage`, timers, a `Device` descriptor,
+  and motion sensors.
+
+## A taste
+
+```tsx
+import { Component, VerticalView, Text, Button, useState } from "wrst";
+
+const App: Component = () => {
+  const [count, setCount] = useState(0);
+
+  return (
+    <VerticalView
+      style={{
+        width: "fill",
+        height: "fill",
+        horizontalAlignment: "center",
+        verticalAlignment: "center",
+      }}
+    >
+      <Text style={{ color: "#fff" }}>{`Count: ${count}`}</Text>
+      <Button onPress={() => setCount(count + 1)}>
+        <Text style={{ color: "#fff" }}>Increment</Text>
+      </Button>
+    </VerticalView>
+  );
+};
+
+export default App;
+```
+
+Ready? Head to [Installation](/docs/installation).

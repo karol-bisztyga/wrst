@@ -38,7 +38,9 @@ export async function init(args: string[]): Promise<void> {
 
   const name = args[0];
   if (!name) {
-    console.error("usage: wrst init <name>\n       wrst init --companion <path-to-rn-project>");
+    console.error(
+      "usage: wrst init <name>\n       wrst init --companion <path-to-rn-project>",
+    );
     process.exit(1);
   }
   if (/\s/.test(name)) {
@@ -67,7 +69,8 @@ export async function init(args: string[]): Promise<void> {
     ["wear-os", "wear-os"],
   ] as const) {
     const src = path.join(TEMPLATES_DIR, tpl);
-    if (existsSync(src)) await cp(src, path.join(dir, dest), { recursive: true });
+    if (existsSync(src))
+      await cp(src, path.join(dir, dest), { recursive: true });
   }
 
   // Templates ship `gitignore` (a nested .gitignore would be applied by npm at
@@ -84,7 +87,7 @@ export async function init(args: string[]): Promise<void> {
   console.log("  Next steps:");
   console.log(`    cd ${name}`);
   console.log("    npm install");
-  console.log("    npm start        # dev server + bundler with hot reload\n");
+  console.log("    npm start        # dev server + bundler with live reload\n");
 }
 
 async function renameGitignores(dir: string): Promise<void> {

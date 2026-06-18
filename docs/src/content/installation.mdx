@@ -1,0 +1,73 @@
+---
+title: Installation
+description: Scaffold a wrst project and run it on a Wear OS or Apple Watch simulator.
+---
+
+# Installation
+
+## Requirements
+
+- **Node.js** (LTS or newer) and npm
+- For **Wear OS**: Android Studio with a Wear OS emulator (or a device)
+- For **Apple Watch**: Xcode with a watchOS simulator (macOS only)
+
+## Create a project
+
+```sh
+npx wrst init my-app        # scaffold a project (src/, apple-watch/, wear-os/)
+cd my-app
+npm install
+```
+
+This generates a JavaScript project at the root plus native host shells in
+`apple-watch/` and `wear-os/`.
+
+## Run it
+
+Start the dev server (bundles your code and live-reloads):
+
+```sh
+npm start
+```
+
+Then, in a second terminal, build and launch on a watch:
+
+```sh
+npm run run:apple-watch     # boots a watchOS simulator, builds, installs, launches
+npm run run:wear-os         # boots a Wear OS emulator, builds, installs, launches
+```
+
+Edit `src/App.tsx` and it reloads on the watch as you save.
+
+import { Callout } from "nextra/components";
+
+<Callout type="info">
+  Live reload re-runs your app on each save, so component state resets on reload
+  (your navigation position is preserved). This is **live reload**, not React
+  Native's Fast Refresh.
+</Callout>
+
+## CLI commands
+
+| Command                                                    | What it does                                               |
+| ---------------------------------------------------------- | ---------------------------------------------------------- |
+| `wrst init <name>`                                         | Scaffold a new project in `./<name>`                       |
+| `wrst init --companion <path>`                             | Add a watch app to an existing React Native project        |
+| `wrst start`                                               | Start the dev server + bundler (live reload)               |
+| `wrst sync`                                                | Apply project config (name, bundle id) to the native hosts |
+| `wrst run:apple-watch`                                     | Debug build + run on a watchOS simulator                   |
+| `wrst run:wear-os`                                         | Debug build + install on a Wear OS device/emulator         |
+| `wrst build:apple-watch` / `build:wear-os`                 | Debug build only, no install                               |
+| `wrst build-release:apple-watch` / `build-release:wear-os` | Release build (runs offline)                               |
+
+In a scaffolded project these are wired to npm scripts (`npm start`,
+`npm run run:apple-watch`, ...).
+
+## Release builds
+
+Release builds embed your code so the app runs without the dev server:
+
+```sh
+npm run build-release:wear-os       # → APK
+npm run build-release:apple-watch   # → watchOS app
+```

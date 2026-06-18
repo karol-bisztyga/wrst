@@ -2,7 +2,7 @@
   "name": "react-native-wrst",
   "version": "0.1.0",
   "description": "Phone-side companion bridge for wrst watch apps (iOS WatchConnectivity / Android Wearable Data Layer).",
-  "license": "ISC",
+  "license": "MIT",
   "main": "src/index.ts",
   "react-native": "src/index.ts",
   "types": "src/index.ts",

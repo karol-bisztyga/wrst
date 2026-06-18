@@ -7,7 +7,7 @@ run it on **Wear OS** and **Apple Watch**.
 
 ```sh
 npm install
-npm start          # dev server + bundler with hot reload
+npm start          # dev server + bundler with live reload
 ```
 
 Then run the app on a watch (loads the bundle from the dev server):

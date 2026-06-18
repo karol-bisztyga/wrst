@@ -19,7 +19,8 @@
     "run:wear-os": "bash scripts/wear-os-run.sh",
     "build:apple-watch": "xcodebuild -project packages/apple-watch/AppleWatch.xcodeproj -scheme 'AppleWatch Watch App' -configuration Debug -destination 'generic/platform=watchOS Simulator' build",
     "build-release:apple-watch": "xcodebuild -project packages/apple-watch/AppleWatch.xcodeproj -scheme 'AppleWatch Watch App' -configuration Release -destination 'generic/platform=watchOS Simulator' build",
-    "run:apple-watch": "bash scripts/apple-watch-run.sh"
+    "run:apple-watch": "bash scripts/apple-watch-run.sh",
+    "release": "./scripts/release.sh"
   },
   "devDependencies": {
     "@types/node": "^25.6.0",

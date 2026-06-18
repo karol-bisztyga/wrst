@@ -2,7 +2,7 @@
   "name": "wrst",
   "version": "0.1.0",
   "description": "React-like JSX UI framework for Wear OS & Apple Watch",
-  "license": "ISC",
+  "license": "MIT",
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",

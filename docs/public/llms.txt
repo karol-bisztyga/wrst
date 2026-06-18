@@ -1,0 +1,38 @@
+# wrst
+
+> wrst is a framework for building smartwatch apps with React and TypeScript. You
+> write React-style components in TypeScript once and run them on both Wear OS
+> (rendered with Jetpack Compose) and Apple Watch (rendered with SwiftUI). It
+> provides reactive state (useState), effects (useEffect), navigation, fetch,
+> localStorage, and live reload during development.
+
+wrst apps can run standalone (a self-contained watch app) or as a companion to a
+phone app. Companion mode is designed to work alongside React Native, exposing a
+phone↔watch messaging API. wrst is published as the npm package `wrst` with a CLI
+(`@wrst/cli`) and prebuilt native hosts for Android (Wear OS) and iOS (Apple Watch).
+
+Status: early-stage MVP. It works end-to-end (development and release builds on
+both platforms), but the API surface is small and still evolving.
+
+## Getting started
+
+- [README](https://github.com/karol-bisztyga/wrst/blob/main/README.md): overview, installation, and a minimal example
+- [Quickstart](https://github.com/karol-bisztyga/wrst#installation): `npx wrst init my-app`, then `npm start` and `npm run run:apple-watch` / `npm run run:wear-os`
+
+## Core concepts
+
+- Components are plain functions returning a UI tree, written in TSX/JSX.
+- State is reactive via `useState`; side effects via `useEffect`.
+- The same TypeScript renders natively on each platform (Compose on Wear OS, SwiftUI on Apple Watch).
+- Built-in: navigation, fetch, localStorage, a `Device` global, timers, and live reload.
+
+## Companion (React Native)
+
+- Add a watch app to an existing React Native project: `npx wrst init --companion .`
+- Provides a unified `Companion` API for phone↔watch messaging.
+
+## Source
+
+- [GitHub repository](https://github.com/karol-bisztyga/wrst)
+- [npm: wrst](https://www.npmjs.com/package/wrst)
+- [npm: @wrst/cli](https://www.npmjs.com/package/@wrst/cli)

@@ -21,7 +21,7 @@ export {
   useNavigation,
 } from "./runtime/navigation.ts";
 
-// App-level state.
+// Global state.
 export {
   createAppState,
   getAppState,

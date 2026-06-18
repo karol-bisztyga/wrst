@@ -1,8 +1,8 @@
 import { Button, Text } from "wrst";
 
 type StyledButtonProps = {
-  width?: number;
-  height?: number;
+  width?: number | "fill";
+  height?: number | "fill";
   label: string;
   onPress: () => void;
 };

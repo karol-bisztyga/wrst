@@ -76,7 +76,7 @@ final class RuntimeController: ObservableObject {
         // are present.
         CompanionManager.shared.activate()
 
-        // Debug hot-reloads from the dev server; release loads the JS bundle
+        // Debug live-reloads from the dev server; release loads the JS bundle
         // embedded in the app (the package compiles per-app, so #if DEBUG tracks
         // the consuming app's configuration).
         #if DEBUG

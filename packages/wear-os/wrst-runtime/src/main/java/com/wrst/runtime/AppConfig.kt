@@ -5,7 +5,7 @@ import androidx.compose.ui.graphics.Color
 import com.wrst.runtime.parsers.PropParser
 
 // App-wide config set from JS via createAppConfig(). Values live in Compose
-// state so changes apply on hot reload (after the bundle re-evaluates).
+// state so changes apply on live reload (after the bundle re-evaluates).
 object AppConfig {
     private val parser = object : PropParser() {}
 

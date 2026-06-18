@@ -297,7 +297,7 @@ reaches all of this via the public `Companion` API: reactive
 
 ## Dev transport (server ↔ host)
 
-Used only during development (hot reload). Not part of the runtime contract, but
+Used only during development (live reload). Not part of the runtime contract, but
 both hosts implement the client side.
 
 - **HTTP** `GET /bundle.js` (and `/bundle.min.js`):

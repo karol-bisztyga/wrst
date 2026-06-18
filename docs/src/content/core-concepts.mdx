@@ -1,0 +1,112 @@
+---
+title: Core concepts
+description: Components, state, effects, navigation, and the built-in runtime.
+---
+
+# Core concepts
+
+## The entry point
+
+Every app calls `start(App)` once from its entry file:
+
+```ts
+import { start } from "wrst";
+import App from "./App.tsx";
+
+start(App);
+```
+
+## Components
+
+A component is a plain function that returns a UI tree. Use the `Component` type:
+
+```tsx
+import { Component, VerticalView, Text } from "wrst";
+
+const Greeting: Component = () => (
+  <VerticalView>
+    <Text style={{ color: "#fff" }}>Hello, watch</Text>
+  </VerticalView>
+);
+```
+
+## State - `useState`
+
+State is reactive: updating it re-renders the parts of the tree that depend on it.
+
+```tsx
+import { useState, Button, Text } from "wrst";
+
+const [count, setCount] = useState(0);
+// setCount(count + 1) updates the UI
+```
+
+## Effects - `useEffect`
+
+Run side effects (timers, fetches, subscriptions) with `useEffect`, returning an
+optional cleanup function:
+
+```tsx
+import { useEffect, useState } from "wrst";
+
+const [now, setNow] = useState(Date.now());
+
+useEffect(() => {
+  const id = setInterval(() => setNow(Date.now()), 1000);
+  return () => clearInterval(id);
+}, []);
+```
+
+## Navigation
+
+Move between screens with the navigation API:
+
+```ts
+import { createNavigation, navigate, goBack, useNavigation } from "wrst";
+```
+
+- `createNavigation(...)` - define your screens
+- `navigate(...)` - go to a screen
+- `goBack()` - pop the current screen
+- `useNavigation()` - read the current navigation state
+
+## Global state
+
+Share state across the tree without prop-drilling:
+
+```ts
+import { createAppState, getAppState, setAppState } from "wrst";
+```
+
+## Theme
+
+Centralize colors, spacing, and typography as plain JS tokens:
+
+```ts
+import { createTheme, defaultTheme } from "wrst";
+```
+
+## Built-in runtime
+
+These are available globally - no import needed, like in a browser:
+
+- `fetch` - HTTP requests
+- `localStorage` - key/value persistence
+- `setTimeout` / `setInterval` (and their `clear*`)
+- `console`
+
+And these are imports:
+
+- `Device` - a descriptor of the current device (`import { Device } from 'wrst'`)
+- Motion sensors - `subscribeSensor`, `useSensor`, `Sensors`
+- Runtime permissions - `requestPermission`, `getPermissionStatus`
+- Native modules - `callNativeModule`, `useNativeModule`, ... (call host-registered
+  native capabilities)
+
+import { Callout } from "nextra/components";
+
+<Callout type="warning">
+  Your component functions run inside an embedded JavaScript engine (QuickJS),
+  not a browser or Node. Keep them pure and synchronous; use the runtime's async
+  primitives (timers, `fetch`) for anything asynchronous.
+</Callout>

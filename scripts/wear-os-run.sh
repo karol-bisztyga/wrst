@@ -42,4 +42,4 @@ echo "wrst: building + installing the Wear OS app..."
 
 echo "wrst: launching $APP_ID..."
 adb shell monkey -p "$APP_ID" -c android.intent.category.LAUNCHER 1
-echo "wrst: launched - run \`npm run server\` in another terminal for the bundle + hot reload."
+echo "wrst: launched - run \`npm run server\` in another terminal for the bundle + live reload."
