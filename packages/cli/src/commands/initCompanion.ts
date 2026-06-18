@@ -337,12 +337,12 @@ never corrupts a committed \`.xcodeproj\`.
 ## Setup (mostly automatic)
 
 \`wrst init --companion\` already added \`@bacons/apple-targets\` (to devDependencies
-+ app config plugins) and \`react-native-wrst\` (to plugins, **after** @bacons). So:
++ app config plugins) and \`@wrst/react-native\` (to plugins, **after** @bacons). So:
 
 \`\`\`sh
 npm install
 npx expo run:ios   # prebuilds: @bacons creates the watch target, the
-                   # react-native-wrst plugin links the WrstRuntime package
+                   # @wrst/react-native plugin links the WrstRuntime package
 \`\`\`
 
 The only manual step left is **signing**: in Xcode, select the watch target and
@@ -353,7 +353,7 @@ pick your team (Apple requirement). Its bundle id is a child of the phone app's
 warning during prebuild, add it by hand: watch target → *General → Frameworks,
 Libraries* → **+** → *Add Other → Add Package Dependency* →
 \`node_modules/wrst/apple-watch/wrst-runtime\` → \`WrstRuntime\`. (Most likely cause:
-\`react-native-wrst\` isn't listed after \`@bacons/apple-targets\` in your plugins.)
+\`@wrst/react-native\` isn't listed after \`@bacons/apple-targets\` in your plugins.)
 
 ## Dev loop
 
@@ -401,25 +401,25 @@ module.exports = (config) => ({
   await writeFile(path.join(targetDir, "expo-target.config.js"), cfg);
   await writeFile(path.join(targetDir, "README.md"), EXPO_TARGET_README);
 
-  // Order matters: @bacons creates the target, then react-native-wrst's plugin
+  // Order matters: @bacons creates the target, then @wrst/react-native's plugin
   // links the WrstRuntime Swift package to it.
   const wired = await addExpoPlugin(t.dir, "@bacons/apple-targets");
-  await addExpoPlugin(t.dir, "react-native-wrst");
+  await addExpoPlugin(t.dir, "@wrst/react-native");
 
   console.log(
     "  → Apple Watch (Expo): generated targets/wrst-watch/ (target via @bacons/apple-targets)",
   );
   if (wired === "app.json") {
     console.log(
-      "     wired @bacons/apple-targets + react-native-wrst into app.json plugins",
+      "     wired @bacons/apple-targets + @wrst/react-native into app.json plugins",
     );
   } else {
     console.log(
-      '     ⚠ add "@bacons/apple-targets" then "react-native-wrst" to your app.config plugins (in that order)',
+      '     ⚠ add "@bacons/apple-targets" then "@wrst/react-native" to your app.config plugins (in that order)',
     );
   }
   console.log(
-    "     (@bacons added to devDependencies; the react-native-wrst plugin auto-links WrstRuntime)",
+    "     (@bacons added to devDependencies; the @wrst/react-native plugin auto-links WrstRuntime)",
   );
   console.log(
     "     after npm install:  npx expo run:ios   (prebuilds + links automatically)",
@@ -498,8 +498,8 @@ edit your \`ios/*.xcodeproj\` (too risky), so add the target once in Xcode:
    you attach to an existing app (step 2).
 
 Then run \`npx wrst start\` (dev server) and build from Xcode; the watch pulls its
-JS bundle and live-reloads. The phone side is already wired via \`react-native-wrst\`
-(\`import { Companion } from "react-native-wrst"\`).
+JS bundle and live-reloads. The phone side is already wired via \`@wrst/react-native\`
+(\`import { Companion } from "@wrst/react-native"\`).
 `;
 }
 
@@ -539,7 +539,7 @@ async function scaffoldAppleWatchBare(t: CompanionTarget): Promise<void> {
 }
 
 // The watch app's bundle entry.
-const WATCH_ENTRY = `import { start } from "wrst";
+const WATCH_ENTRY = `import { start } from "@wrst/core";
 import App from "./App.tsx";
 
 // The watch UI's entry point - bundled by \`wrst start\` / the build and run
@@ -561,7 +561,7 @@ const WATCH_APP_DEMO = `import {
   useState,
   useEffect,
   Component,
-} from "wrst";
+} from "@wrst/core";
 
 // A bidirectional companion demo: each side sends a random number to the other
 // and shows the last value it received. Companion.isCompanionAvailable / .reason
@@ -674,7 +674,7 @@ export default {
   await writeFile(
     path.join(watchDir, "tsconfig.json"),
     JSON.stringify(
-      { extends: "wrst/tsconfig.base.json", include: ["**/*.ts", "**/*.tsx"] },
+      { extends: "@wrst/core/tsconfig.base.json", include: ["**/*.ts", "**/*.tsx"] },
       null,
       2,
     ) + "\n",
@@ -710,7 +710,7 @@ async function excludeFromRootTsconfig(
 }
 
 // Step 10: wire the phone project - add the deps + npm scripts (non-destructive:
-// only adds what's missing). react-native-wrst is a runtime dep (the phone uses
+// only adds what's missing). @wrst/react-native is a runtime dep (the phone uses
 // it); wrst + @wrst/cli are dev tooling for the watch side (the wrst package also
 // provides the `wrst` bin, so `npx wrst` / npm run work without a global install).
 async function wirePhoneProject(t: CompanionTarget): Promise<void> {
@@ -733,7 +733,7 @@ async function wirePhoneProject(t: CompanionTarget): Promise<void> {
       changed = true;
     }
   };
-  addDep(pkg.dependencies, "react-native-wrst", "^0.1.0");
+  addDep(pkg.dependencies, "@wrst/react-native", "^0.1.0");
   addDep(pkg.devDependencies, "wrst", "^0.1.0");
   addDep(pkg.devDependencies, "@wrst/cli", "^0.1.0");
   // Expo gets the watch-target plugin so a plain `npm install` pulls it (no
@@ -801,7 +801,7 @@ export async function initCompanion(projectPath: string): Promise<void> {
     );
   }
   console.log(
-    '    4. in your RN code: import { Companion } from "react-native-wrst"',
+    '    4. in your RN code: import { Companion } from "@wrst/react-native"',
   );
   console.log("       (edit the watch UI in watch/App.tsx)\n");
 }

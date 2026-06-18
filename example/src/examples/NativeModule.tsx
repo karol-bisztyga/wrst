@@ -1,4 +1,4 @@
-import { Component } from "wrst";
+import { Component } from "@wrst/core";
 import {
   View,
   Text,
@@ -6,7 +6,7 @@ import {
   VerticalView,
   useState,
   callNativeModule,
-} from "wrst";
+} from "@wrst/core";
 import { StyledButton } from "./components/StyledButton.tsx";
 
 // Demonstrates the native-module extension hook. The host's thin native shell

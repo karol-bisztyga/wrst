@@ -1,6 +1,9 @@
 {
-  "name": "react-native-wrst",
-  "version": "0.1.0",
+  "name": "@wrst/react-native",
+  "version": "0.1.1",
+  "publishConfig": {
+    "access": "public"
+  },
   "description": "Phone-side companion bridge for wrst watch apps (iOS WatchConnectivity / Android Wearable Data Layer).",
   "license": "MIT",
   "main": "src/index.ts",

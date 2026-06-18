@@ -10,7 +10,7 @@ description: Components, state, effects, navigation, and the built-in runtime.
 Every app calls `start(App)` once from its entry file:
 
 ```ts
-import { start } from "wrst";
+import { start } from "@wrst/core";
 import App from "./App.tsx";
 
 start(App);
@@ -21,7 +21,7 @@ start(App);
 A component is a plain function that returns a UI tree. Use the `Component` type:
 
 ```tsx
-import { Component, VerticalView, Text } from "wrst";
+import { Component, VerticalView, Text } from "@wrst/core";
 
 const Greeting: Component = () => (
   <VerticalView>
@@ -35,7 +35,7 @@ const Greeting: Component = () => (
 State is reactive: updating it re-renders the parts of the tree that depend on it.
 
 ```tsx
-import { useState, Button, Text } from "wrst";
+import { useState, Button, Text } from "@wrst/core";
 
 const [count, setCount] = useState(0);
 // setCount(count + 1) updates the UI
@@ -47,7 +47,7 @@ Run side effects (timers, fetches, subscriptions) with `useEffect`, returning an
 optional cleanup function:
 
 ```tsx
-import { useEffect, useState } from "wrst";
+import { useEffect, useState } from "@wrst/core";
 
 const [now, setNow] = useState(Date.now());
 
@@ -62,7 +62,7 @@ useEffect(() => {
 Move between screens with the navigation API:
 
 ```ts
-import { createNavigation, navigate, goBack, useNavigation } from "wrst";
+import { createNavigation, navigate, goBack, useNavigation } from "@wrst/core";
 ```
 
 - `createNavigation(...)` - define your screens
@@ -75,7 +75,7 @@ import { createNavigation, navigate, goBack, useNavigation } from "wrst";
 Share state across the tree without prop-drilling:
 
 ```ts
-import { createAppState, getAppState, setAppState } from "wrst";
+import { createAppState, getAppState, setAppState } from "@wrst/core";
 ```
 
 ## Theme
@@ -83,7 +83,7 @@ import { createAppState, getAppState, setAppState } from "wrst";
 Centralize colors, spacing, and typography as plain JS tokens:
 
 ```ts
-import { createTheme, defaultTheme } from "wrst";
+import { createTheme, defaultTheme } from "@wrst/core";
 ```
 
 ## Built-in runtime

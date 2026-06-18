@@ -11,7 +11,7 @@ final class CompanionManager: NSObject {
     static let shared = CompanionManager()
 
     // Both sides agree on this dictionary key for the JSON payload. The phone-side
-    // RN bridge (react-native-wrst) uses the same key.
+    // RN bridge (@wrst/react-native) uses the same key.
     private static let messageKey = "wrst"
 
     private var session: WCSession?

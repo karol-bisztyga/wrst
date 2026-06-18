@@ -4,8 +4,8 @@
 # Usage: bash scripts/release.sh <version>      e.g. bash scripts/release.sh 0.1.0
 #
 # Pass a bare version (no 'v' prefix) - the script adds the 'v' for the git tag.
-# Publishes in dependency order (@wrst/cli -> wrst -> react-native-wrst), since
-# `wrst` depends on `@wrst/cli`. Validates the version, checks every package.json
+# Publishes in dependency order (@wrst/cli -> @wrst/core -> @wrst/react-native),
+# since `@wrst/core` depends on `@wrst/cli`. Validates the version, checks every package.json
 # already matches it, runs typecheck + the native build (what `prepack` runs
 # anyway), shows the plan, and asks before publishing.
 set -euo pipefail
@@ -64,7 +64,7 @@ echo "release: typechecking..."
 npm run typecheck
 
 echo "release: building native runtimes (Android AAR + Apple Watch package)..."
-npm run build:native -w wrst
+npm run build:native -w @wrst/core
 
 # --- plan + confirmation -----------------------------------------------------
 cat <<EOF
@@ -77,8 +77,8 @@ cat <<EOF
 
   will publish, in order:
     1. @wrst/cli
-    2. wrst
-    3. react-native-wrst
+    2. @wrst/core
+    3. @wrst/react-native
 
   then: git tag $TAG && git push --tags
 =====================================================================
@@ -95,11 +95,11 @@ esac
 echo "release: publishing @wrst/cli..."
 npm publish -w @wrst/cli
 
-echo "release: publishing wrst..."
-npm publish -w wrst
+echo "release: publishing @wrst/core..."
+npm publish -w @wrst/core
 
-echo "release: publishing react-native-wrst..."
-npm publish -w react-native-wrst
+echo "release: publishing @wrst/react-native..."
+npm publish -w @wrst/react-native
 
 # --- tag ---------------------------------------------------------------------
 echo "release: tagging $TAG..."

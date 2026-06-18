@@ -48,7 +48,7 @@ Edit `src/App.tsx` and it reloads on the watch as you save.
 ## Sample code
 
 ```tsx
-import { Component, VerticalView, Text, Button, useState } from "wrst";
+import { Component, VerticalView, Text, Button, useState } from "@wrst/core";
 
 const App: Component = () => {
   const [count, setCount] = useState(0);

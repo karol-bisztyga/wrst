@@ -15,7 +15,7 @@ import {
   TextInput,
   Touchable,
   Image,
-} from "wrst";
+} from "@wrst/core";
 
 // Demo of the input controls: Toggle / Slider / Stepper / Picker. Each holds its
 // value in useState and updates via the control's onChange.

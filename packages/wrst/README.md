@@ -21,7 +21,7 @@ import {
   VerticalView,
   Component,
   HorizontalView,
-} from "wrst";
+} from "@wrst/core";
 
 // Your app's root component. Components are plain functions returning a tree;
 // state is reactive (useState), and the same code renders on Wear OS & Apple Watch.

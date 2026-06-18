@@ -1,5 +1,5 @@
-import { Component } from "wrst";
-import { View, Text, VerticalView, ScalingScrollView, useState } from "wrst";
+import { Component } from "@wrst/core";
+import { View, Text, VerticalView, ScalingScrollView, useState } from "@wrst/core";
 import { StyledButton } from "./components/StyledButton.tsx";
 
 // Implicit animations demo: a View with `animate` eases its style changes

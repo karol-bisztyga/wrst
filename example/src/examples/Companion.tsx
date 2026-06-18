@@ -1,5 +1,5 @@
-import { Companion, VerticalView, Text, View, useState, useEffect } from "wrst";
-import { Component } from "wrst";
+import { Companion, VerticalView, Text, View, useState, useEffect } from "@wrst/core";
+import { Component } from "@wrst/core";
 import { StyledButton } from "./components/StyledButton.tsx";
 
 // The companion 3-tier pattern: ask the phone when it's reachable, else fetch

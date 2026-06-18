@@ -1,4 +1,4 @@
-import { Component } from "wrst";
+import { Component } from "@wrst/core";
 import {
   Text,
   VerticalView,
@@ -7,7 +7,7 @@ import {
   useEffect,
   useNativeModule,
   requestPermission,
-} from "wrst";
+} from "@wrst/core";
 
 // Sensors that are *native modules* (not engine built-ins). These two work on
 // both platforms - step count (Android SensorManager / iOS CMPedometer) and
