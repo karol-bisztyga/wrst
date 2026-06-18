@@ -42,4 +42,4 @@ cpSync(appleWatchPkgSrc, appleWatchDest, {
   filter: (src) => !/(^|\/)(build|\.build|DerivedData)(\/|$)/.test(src),
 });
 
-console.log("[build:native] done → packages/wrst/{wear-os,apple-watch}");
+console.log("[build:native] done → packages/core/{wear-os,apple-watch}");

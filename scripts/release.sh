@@ -43,7 +43,7 @@ fi
 # Every package we publish must already be set to $VERSION; bump them before
 # releasing rather than letting the tag drift from what's on npm.
 echo "release: checking package versions match $VERSION..."
-for PKG in packages/cli packages/wrst packages/react-native-wrst; do
+for PKG in packages/cli packages/core packages/react-native-wrst; do
   PKG_VERSION="$(node -p "require('./$PKG/package.json').version")"
   PKG_NAME="$(node -p "require('./$PKG/package.json').name")"
   if [ "$PKG_VERSION" != "$VERSION" ]; then
