@@ -87,7 +87,7 @@ export default function IndexPage() {
         </div>
 
         <p style={{ marginTop: 18, fontSize: 14, opacity: 0.55 }}>
-          <code>npx wrst init my-app</code>
+          <code>npx @wrst/core init my-app</code>
         </p>
       </section>
 

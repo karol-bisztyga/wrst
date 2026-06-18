@@ -55,5 +55,5 @@ dependencies {
     debugImplementation(libs.ui.test.manifest)
     implementation(libs.quickjs.kt.v105)
     implementation(libs.okhttp)
-    implementation(files("../../node_modules/wrst/wear-os/wrst-runtime.aar"))
+    implementation(files("../../node_modules/@wrst/core/wear-os/wrst-runtime.aar"))
 }

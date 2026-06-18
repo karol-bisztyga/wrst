@@ -102,6 +102,8 @@ export function createNavigation(cfg: Config): void {
   currentRoute = stack[stack.length - 1];
   persistStack();
 
+  (globalThis as any).__wrstNavRestore = navRestore;
+
   native()?.nativeSetShowHeader?.(cfg.showHeader ?? true);
 }
 
@@ -156,4 +158,3 @@ export function navRestore(): string {
   });
   return JSON.stringify(trees);
 }
-(globalThis as any).__wrstNavRestore = navRestore;

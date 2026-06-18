@@ -4,7 +4,7 @@ The command-line tool for [wrst](https://www.npmjs.com/package/wrst) - scaffold,
 develop, and build smartwatch apps for Wear OS and Apple Watch.
 
 ```sh
-npx wrst init my-app
+npx @wrst/core init my-app
 ```
 
 ## Commands
