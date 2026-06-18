@@ -1,3 +1,4 @@
+import path from 'node:path'
 import nextra from 'nextra'
 
 const withNextra = nextra({
@@ -10,7 +11,9 @@ const withNextra = nextra({
 
 export default withNextra({
   reactStrictMode: true,
-  // This site lives in a monorepo; pin tracing to this folder so Next doesn't
-  // pick the repo-root lockfile as the workspace root.
-  outputFileTracingRoot: import.meta.dirname
+  // This site lives in a monorepo. Pin tracing to the repo root so Next's
+  // traced paths line up with where Vercel's builder resolves them (it uses
+  // the root lockfile + workspaces). Pinning to the docs/ dir instead makes
+  // Vercel look for .next one directory too high and fail with ENOENT.
+  outputFileTracingRoot: path.join(import.meta.dirname, '..')
 })
