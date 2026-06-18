@@ -352,12 +352,12 @@ pick your team (Apple requirement). Its bundle id is a child of the phone app's
 **Fallback** - if you see a "couldn't auto-link the WrstRuntime Swift package"
 warning during prebuild, add it by hand: watch target → *General → Frameworks,
 Libraries* → **+** → *Add Other → Add Package Dependency* →
-\`node_modules/wrst/apple-watch/wrst-runtime\` → \`WrstRuntime\`. (Most likely cause:
+\`node_modules/@wrst/core/apple-watch/wrst-runtime\` → \`WrstRuntime\`. (Most likely cause:
 \`@wrst/react-native\` isn't listed after \`@bacons/apple-targets\` in your plugins.)
 
 ## Dev loop
 
-Run \`npx wrst start\` (the dev server) and build from Xcode / \`expo run:ios\`; the
+Run \`npx @wrst/core start\` (the dev server) and build from Xcode / \`expo run:ios\`; the
 watch pulls its JS bundle from the dev server and live-reloads.
 `;
 
@@ -492,12 +492,12 @@ edit your \`ios/*.xcodeproj\` (too risky), so add the target once in Xcode:
    the watch app launches but can't pull its JS bundle in dev.
 7. **Link the wrst runtime:** watch target → **General → Frameworks, Libraries** →
    **+** → *Add Other → Add Package Dependency...* → choose the local package
-   \`node_modules/wrst/apple-watch/wrst-runtime\` → add the **WrstRuntime** product.
+   \`node_modules/@wrst/core/apple-watch/wrst-runtime\` → add the **WrstRuntime** product.
 8. **Signing:** select your team for the watch target (stays manual - Apple).
    Xcode adds an **Embed Watch Content** phase to the phone app automatically when
    you attach to an existing app (step 2).
 
-Then run \`npx wrst start\` (dev server) and build from Xcode; the watch pulls its
+Then run \`npx @wrst/core start\` (dev server) and build from Xcode; the watch pulls its
 JS bundle and live-reloads. The phone side is already wired via \`@wrst/react-native\`
 (\`import { Companion } from "@wrst/react-native"\`).
 `;
@@ -711,8 +711,8 @@ async function excludeFromRootTsconfig(
 
 // Step 10: wire the phone project - add the deps + npm scripts (non-destructive:
 // only adds what's missing). @wrst/react-native is a runtime dep (the phone uses
-// it); wrst + @wrst/cli are dev tooling for the watch side (the wrst package also
-// provides the `wrst` bin, so `npx wrst` / npm run work without a global install).
+// it); @wrst/core + @wrst/cli are dev tooling for the watch side (@wrst/core also
+// provides the `wrst` bin, so `wrst` / npm run work without a global install).
 async function wirePhoneProject(t: CompanionTarget): Promise<void> {
   const pkgPath = path.join(t.dir, "package.json");
   const pkg = JSON.parse(await readFile(pkgPath, "utf8"));
@@ -734,7 +734,7 @@ async function wirePhoneProject(t: CompanionTarget): Promise<void> {
     }
   };
   addDep(pkg.dependencies, "@wrst/react-native", "^0.1.0");
-  addDep(pkg.devDependencies, "wrst", "^0.1.0");
+  addDep(pkg.devDependencies, "@wrst/core", "^0.1.0");
   addDep(pkg.devDependencies, "@wrst/cli", "^0.1.0");
   // Expo gets the watch-target plugin so a plain `npm install` pulls it (no
   // separate `npm i -D @bacons/apple-targets` step). Pin it yourself later.

@@ -13,7 +13,7 @@
 /* Begin XCLocalSwiftPackageReference section */
 		FA57DEAD0000000000000A01 /* XCLocalSwiftPackageReference "wrst-runtime" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = "../node_modules/wrst/apple-watch/wrst-runtime";
+			relativePath = "../node_modules/@wrst/core/apple-watch/wrst-runtime";
 		};
 /* End XCLocalSwiftPackageReference section */
 

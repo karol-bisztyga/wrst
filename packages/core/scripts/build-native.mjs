@@ -1,7 +1,7 @@
-// Populates the wrst package with the native runtimes so a consumer's scaffolded
-// app can reference them from node_modules/wrst (Option B distribution):
-//   wrst/wear-os/wrst-runtime.aar     ← prebuilt Android AAR
-//   wrst/apple-watch/wrst-runtime/    ← iOS Swift package (source)
+// Populates the @wrst/core package with the native runtimes so a consumer's
+// scaffolded app can reference them from node_modules/@wrst/core (Option B):
+//   @wrst/core/wear-os/wrst-runtime.aar     ← prebuilt Android AAR
+//   @wrst/core/apple-watch/wrst-runtime/    ← iOS Swift package (source)
 // Run by `prepack` at publish time (and manually during dev).
 import { execSync } from "node:child_process";
 import { cpSync, mkdirSync, rmSync, existsSync } from "node:fs";

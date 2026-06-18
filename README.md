@@ -30,7 +30,7 @@ on the wrist.
 ## Installation
 
 ```sh
-npx wrst init my-app        # scaffold a project (src/, apple-watch/, wear-os/)
+npx @wrst/core init my-app        # scaffold a project (src/, apple-watch/, wear-os/)
 cd my-app
 npm install
 npm start                   # start the dev server + live reload
@@ -79,7 +79,7 @@ Already have a React Native phone app? Add a watch app to it and message between
 phone and watch:
 
 ```sh
-npx wrst init --companion .   # run inside your RN project
+npx @wrst/core init --companion .   # run inside your RN project
 ```
 
 ## License

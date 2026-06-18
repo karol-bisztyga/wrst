@@ -4,7 +4,7 @@ Build smartwatch apps with TypeScript + JSX - one codebase for **Wear OS** and
 **Apple Watch**.
 
 ```sh
-npx wrst init my-app
+npx @wrst/core init my-app
 cd my-app && npm install
 npm start
 ```

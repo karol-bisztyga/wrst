@@ -9,14 +9,14 @@ const { withXcodeProject } = require("@expo/config-plugins");
 // in try/catch with a graceful fallback to the one-time manual Xcode step.
 
 // Path to the local Swift package, relative to the generated ios/ project dir.
-const PACKAGE_REL_PATH = "../node_modules/wrst/apple-watch/wrst-runtime";
+const PACKAGE_REL_PATH = "../node_modules/@wrst/core/apple-watch/wrst-runtime";
 const PRODUCT_NAME = "WrstRuntime";
 const PACKAGE_COMMENT = 'XCLocalSwiftPackageReference "wrst-runtime"';
 
 const MANUAL_HINT =
   "[@wrst/react-native] Add it in Xcode: watch target -> General -> Frameworks, " +
   "Libraries -> + -> Add Other -> Add Package Dependency -> " +
-  "node_modules/wrst/apple-watch/wrst-runtime -> WrstRuntime.";
+  "node_modules/@wrst/core/apple-watch/wrst-runtime -> WrstRuntime.";
 
 module.exports = function withWrstWatch(config) {
   return withXcodeProject(config, (cfg) => {
