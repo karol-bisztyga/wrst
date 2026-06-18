@@ -13,7 +13,7 @@
     "build-release:wear-os": "wrst build-release:wear-os"
   },
   "dependencies": {
-    "wrst": "^0.1.0"
+    "@wrst/core": "^0.1.0"
   },
   "devDependencies": {
     "@wrst/cli": "^0.1.0"

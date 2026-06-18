@@ -1,4 +1,4 @@
-import { start } from "wrst";
+import { start } from "@wrst/core";
 import App from "./App.tsx";
 
 // The bundle's entry point - import the framework, import your root component,

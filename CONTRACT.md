@@ -6,7 +6,7 @@ It is the single source of truth that lets the npm package and the prebuilt nati
 binaries version independently - see [Protocol version](#protocol-version).
 
 If you change anything here in a breaking way, **bump `PROTOCOL_VERSION`** (in
-`packages/wrst/src/runtime/protocol.ts`) and the supported version in both hosts.
+`packages/core/src/runtime/protocol.ts`) and the supported version in both hosts.
 
 ## Overview
 

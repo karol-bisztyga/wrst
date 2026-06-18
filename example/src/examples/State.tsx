@@ -1,9 +1,9 @@
-// todo import from 'wrst'
-import { HorizontalView } from "wrst";
-import { VerticalView } from "wrst";
-import { View, Text, useState, List } from "wrst";
+// todo import from '@wrst/core'
+import { HorizontalView } from "@wrst/core";
+import { VerticalView } from "@wrst/core";
+import { View, Text, useState, List } from "@wrst/core";
 // todo remove this
-import { Component } from "wrst";
+import { Component } from "@wrst/core";
 import { StyledButton } from "./components/StyledButton.tsx";
 
 const boxSize = 20;

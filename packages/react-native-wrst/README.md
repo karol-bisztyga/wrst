@@ -1,4 +1,4 @@
-# react-native-wrst
+# @wrst/react-native
 
 The **phone-side** companion bridge for [wrst](https://www.npmjs.com/package/wrst)
 watch apps. Install it in your React Native app to talk to a paired wrst watch
@@ -7,7 +7,7 @@ Layer**). It's the counterpart to the watch's `Companion` API (from the `wrst`
 package) - both speak the same wire contract.
 
 ```sh
-npm install react-native-wrst
+npm install @wrst/react-native
 cd ios && pod install   # iOS only
 ```
 
@@ -17,7 +17,7 @@ Expo Go or on web (there's no native host); use a dev/prebuild build.
 ## Usage
 
 ```ts
-import { Companion } from "react-native-wrst";
+import { Companion } from "@wrst/react-native";
 
 // Is the watch app reachable + installed right now?
 const { available, reason } = await Companion.getStatus();

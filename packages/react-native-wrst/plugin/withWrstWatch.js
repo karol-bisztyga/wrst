@@ -14,7 +14,7 @@ const PRODUCT_NAME = "WrstRuntime";
 const PACKAGE_COMMENT = 'XCLocalSwiftPackageReference "wrst-runtime"';
 
 const MANUAL_HINT =
-  "[react-native-wrst] Add it in Xcode: watch target -> General -> Frameworks, " +
+  "[@wrst/react-native] Add it in Xcode: watch target -> General -> Frameworks, " +
   "Libraries -> + -> Add Other -> Add Package Dependency -> " +
   "node_modules/wrst/apple-watch/wrst-runtime -> WrstRuntime.";
 
@@ -24,7 +24,7 @@ module.exports = function withWrstWatch(config) {
       linkWrstRuntime(cfg.modResults);
     } catch (e) {
       console.warn(
-        "[react-native-wrst] couldn't auto-link the WrstRuntime Swift package to the watch target.\n" +
+        "[@wrst/react-native] couldn't auto-link the WrstRuntime Swift package to the watch target.\n" +
           "  " +
           MANUAL_HINT +
           "\n  Reason: " +
@@ -42,8 +42,8 @@ function linkWrstRuntime(proj) {
     // @bacons may generate the target as a separate project (or not yet); skip
     // without failing the build and point at the manual step.
     console.warn(
-      "[react-native-wrst] no watchOS target found in the main project - skipping WrstRuntime auto-link.\n" +
-        "  Make sure \"@bacons/apple-targets\" is listed before \"react-native-wrst\" in your app config plugins.\n" +
+      "[@wrst/react-native] no watchOS target found in the main project - skipping WrstRuntime auto-link.\n" +
+        "  Make sure \"@bacons/apple-targets\" is listed before \"@wrst/react-native\" in your app config plugins.\n" +
         "  " +
         MANUAL_HINT,
     );

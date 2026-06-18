@@ -1,5 +1,5 @@
 {
   "//": "Consumes the published preset exactly like a scaffolded app would. No explicit global.d.ts include - wrst's ambient globals arrive via the /// <reference> in its index.ts.",
-  "extends": "wrst/tsconfig.base.json",
+  "extends": "@wrst/core/tsconfig.base.json",
   "include": ["src"]
 }

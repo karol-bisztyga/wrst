@@ -1,5 +1,5 @@
-import { Component } from "wrst";
-import { View, Text, ScrollView, VerticalView, Device } from "wrst";
+import { Component } from "@wrst/core";
+import { View, Text, ScrollView, VerticalView, Device } from "@wrst/core";
 
 export const DeviceInfo: Component = () => {
   return (

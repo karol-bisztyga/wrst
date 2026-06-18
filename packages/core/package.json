@@ -1,6 +1,9 @@
 {
-  "name": "wrst",
-  "version": "0.1.0",
+  "name": "@wrst/core",
+  "version": "0.1.1",
+  "publishConfig": {
+    "access": "public"
+  },
   "description": "React-like JSX UI framework for Wear OS & Apple Watch",
   "license": "MIT",
   "type": "module",

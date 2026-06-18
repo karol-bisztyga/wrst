@@ -1,4 +1,4 @@
-import { start } from "wrst";
+import { start } from "@wrst/core";
 import App from "./examples/App.tsx";
 
 // Entry point - this is all a consumer app needs: import the

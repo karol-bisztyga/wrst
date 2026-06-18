@@ -1,4 +1,4 @@
-import { Component, useState } from "wrst";
+import { Component, useState } from "@wrst/core";
 import {
   View,
   Text,
@@ -7,7 +7,7 @@ import {
   createTheme,
   type GradientDirection,
   type GradientType,
-} from "wrst";
+} from "@wrst/core";
 import { StyledButton } from "./components/StyledButton";
 
 // Showcases the Tier-1 "soul" styling: theme tokens + gradients + shadow +

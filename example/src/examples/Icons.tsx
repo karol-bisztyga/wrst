@@ -1,4 +1,4 @@
-import { Component } from "wrst";
+import { Component } from "@wrst/core";
 import {
   Icon,
   Text,
@@ -6,7 +6,7 @@ import {
   VerticalView,
   HorizontalView,
   ScalingScrollView,
-} from "wrst";
+} from "@wrst/core";
 
 // Icon component demo: cross-platform names mapped to SF Symbols (Apple Watch)
 // and Material icons (Wear OS), tinted + sized. No images bundled.

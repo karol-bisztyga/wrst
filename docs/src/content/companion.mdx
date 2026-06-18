@@ -19,14 +19,14 @@ npx wrst init --companion .
 ```
 
 This adds the watch app and wires up the phone side via the
-`react-native-wrst` bridge.
+`@wrst/react-native` bridge.
 
 ## The `Companion` API (watch side)
 
 Import `Companion` from `wrst`:
 
 ```tsx
-import { Companion } from "wrst";
+import { Companion } from "@wrst/core";
 ```
 
 - **`Companion.isCompanionAvailable`** - reactive boolean: is the paired phone app
@@ -38,8 +38,8 @@ import { Companion } from "wrst";
   returns a subscription with `unsubscribe()`.
 
 ```tsx
-import { useEffect, useState, Text, Button } from "wrst";
-import { Companion } from "wrst";
+import { useEffect, useState, Text, Button } from "@wrst/core";
+import { Companion } from "@wrst/core";
 
 const [last, setLast] = useState("");
 

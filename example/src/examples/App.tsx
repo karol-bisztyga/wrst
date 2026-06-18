@@ -1,7 +1,7 @@
-import { createNavigation, useNavigation } from "wrst";
-import { createAppState } from "wrst";
-import { createAppConfig } from "wrst";
-import { Component } from "wrst";
+import { createNavigation, useNavigation } from "@wrst/core";
+import { createAppState } from "@wrst/core";
+import { createAppConfig } from "@wrst/core";
+import { Component } from "@wrst/core";
 import { MenuScreen } from "./MenuScreen.tsx";
 import { Effect } from "./Effect.tsx";
 import { Timeouts } from "./Timeouts.tsx";

@@ -1,7 +1,7 @@
-import { getAppState, setAppState } from "wrst";
-import { VerticalView } from "wrst";
-import { Text, View } from "wrst";
-import { Component } from "wrst";
+import { getAppState, setAppState } from "@wrst/core";
+import { VerticalView } from "@wrst/core";
+import { Text, View } from "@wrst/core";
+import { Component } from "@wrst/core";
 import { StyledButton } from "./components/StyledButton.tsx";
 
 const rnd = () => Math.floor(Math.random() * 100) + 1;

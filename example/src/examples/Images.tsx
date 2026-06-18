@@ -1,4 +1,4 @@
-import { Component, useState } from "wrst";
+import { Component, useState } from "@wrst/core";
 import {
   Image,
   Progress,
@@ -6,7 +6,7 @@ import {
   View,
   VerticalView,
   ScalingScrollView,
-} from "wrst";
+} from "@wrst/core";
 import { StyledButton } from "./components/StyledButton";
 
 // Image component demo: loads from a URL via the native async image loader

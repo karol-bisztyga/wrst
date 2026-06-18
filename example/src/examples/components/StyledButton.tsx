@@ -1,4 +1,4 @@
-import { Button, Text } from "wrst";
+import { Button, Text } from "@wrst/core";
 
 type StyledButtonProps = {
   width?: number | "fill";

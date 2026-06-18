@@ -4,7 +4,7 @@ import React
 
 // Phone-side companion bridge over WatchConnectivity (WCSession). The counterpart
 // of the watch's CompanionManager (WrstRuntime). Exposes availability + message
-// send/receive to RN JS via the `react-native-wrst` package. The OS owns pairing;
+// send/receive to RN JS via the `@wrst/react-native` package. The OS owns pairing;
 // we only read reachability/install state and exchange messages. See CONTRACT.md.
 @objc(WrstCompanion)
 final class WrstCompanion: RCTEventEmitter {

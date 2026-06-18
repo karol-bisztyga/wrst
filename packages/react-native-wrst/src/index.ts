@@ -8,7 +8,7 @@ import { NativeEventEmitter, NativeModules, Platform } from "react-native";
 // JSON-string payloads) is shared with the watch hosts - see CONTRACT.md.
 
 const LINKING_ERROR =
-  "react-native-wrst: the native module 'WrstCompanion' is not linked.\n" +
+  "@wrst/react-native: the native module 'WrstCompanion' is not linked.\n" +
   Platform.select({
     ios: "Run `pod install` in your ios/ dir and rebuild.\n",
     default: "Rebuild the app after installing.\n",

@@ -1,4 +1,4 @@
 {
-  "extends": "wrst/tsconfig.base.json",
+  "extends": "@wrst/core/tsconfig.base.json",
   "include": ["src", "wrst.config.ts"]
 }

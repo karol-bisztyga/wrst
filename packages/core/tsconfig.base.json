@@ -1,5 +1,5 @@
 {
-  "//": "wrst app preset - scaffolded projects extend this via \"wrst/tsconfig.base.json\". It targets the QuickJS runtime (NOT a browser or Node): no DOM lib, no @types/node, so wrst's own ambient globals (setTimeout->string, fetch, console, ...) are authoritative. Self-contained so it works from node_modules.",
+  "//": "wrst app preset - scaffolded projects extend this via \"@wrst/core/tsconfig.base.json\". It targets the QuickJS runtime (NOT a browser or Node): no DOM lib, no @types/node, so wrst's own ambient globals (setTimeout->string, fetch, console, ...) are authoritative. Self-contained so it works from node_modules.",
   "compilerOptions": {
     "target": "ES2020",
     "module": "ESNext",

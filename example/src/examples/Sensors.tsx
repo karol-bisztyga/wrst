@@ -1,4 +1,4 @@
-import { Component, useEffect } from "wrst";
+import { Component, useEffect } from "@wrst/core";
 import {
   Text,
   VerticalView,
@@ -6,7 +6,7 @@ import {
   useState,
   useSensor,
   type SensorSample,
-} from "wrst";
+} from "@wrst/core";
 
 const ZERO: SensorSample = { x: 0, y: 0, z: 0, timestamp: 0 };
 const fmt = (n: number) => n.toFixed(2);

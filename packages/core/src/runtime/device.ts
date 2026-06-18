@@ -29,5 +29,5 @@ const info = loadDevice();
 Object.freeze(info.dimensions);
 
 // Read-only value, mirroring React Native's Platform/Dimensions.
-// Import it explicitly: `import { Device } from "wrst"` - it is NOT a global.
+// Import it explicitly: `import { Device } from "@wrst/core"` - it is NOT a global.
 export const Device: DeviceInfo = Object.freeze(info);

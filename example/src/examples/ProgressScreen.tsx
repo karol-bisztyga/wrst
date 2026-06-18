@@ -1,4 +1,4 @@
-import { Component } from "wrst";
+import { Component } from "@wrst/core";
 import {
   Progress,
   Text,
@@ -6,7 +6,7 @@ import {
   VerticalView,
   ScalingScrollView,
   useState,
-} from "wrst";
+} from "@wrst/core";
 import { StyledButton } from "./components/StyledButton.tsx";
 
 // Progress component demo: an indeterminate spinner and a determinate ring

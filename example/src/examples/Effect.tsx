@@ -1,7 +1,7 @@
-import { HorizontalView } from "wrst";
-import { VerticalView } from "wrst";
-import { View, Text, useState, useEffect, ScalingScrollView } from "wrst";
-import { Component } from "wrst";
+import { HorizontalView } from "@wrst/core";
+import { VerticalView } from "@wrst/core";
+import { View, Text, useState, useEffect, ScalingScrollView } from "@wrst/core";
+import { Component } from "@wrst/core";
 import { StyledButton } from "./components/StyledButton.tsx";
 
 const rnd = () => Math.floor(Math.random() * 100);

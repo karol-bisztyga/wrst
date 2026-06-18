@@ -10,10 +10,10 @@
   "scripts": {
     "server": "WRST_ENTRY=example/src/entry.ts WRST_OUTDIR=dist tsx packages/cli/src/server/main.ts",
     "bundle": "WRST_ENTRY=example/src/entry.ts WRST_OUTDIR=dist tsx scripts/bundle.ts",
-    "typecheck": "tsc -p packages/wrst && tsc -p packages/cli && tsc -p example",
+    "typecheck": "tsc -p packages/core && tsc -p packages/cli && tsc -p example",
     "wrst": "tsx packages/cli/src/cli.ts",
-    "pack": "npm pack -w wrst",
-    "pack:dry": "npm pack -w wrst --dry-run",
+    "pack": "npm pack -w @wrst/core",
+    "pack:dry": "npm pack -w @wrst/core --dry-run",
     "build:wear-os": "cd packages/wear-os && ./gradlew assembleDebug",
     "build-release:wear-os": "cd packages/wear-os && ./gradlew assembleRelease",
     "run:wear-os": "bash scripts/wear-os-run.sh",
